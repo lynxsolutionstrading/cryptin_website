@@ -21,6 +21,26 @@
     let audioCtx   = null;
 
 
+    // ── Countdown tick (3 → low, 2 → mid, 1 → high ding) ────────────────────
+    function playTick(n) {
+        try {
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const o = audioCtx.createOscillator();
+            const g = audioCtx.createGain();
+            o.connect(g);
+            g.connect(audioCtx.destination);
+            o.type = 'sine';
+            // Pitch rises with tension: 3 = low, 2 = mid, 1 = high
+            const freq = n === 1 ? 880 : n === 2 ? 660 : 520;
+            o.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            o.frequency.exponentialRampToValueAtTime(freq * 0.75, audioCtx.currentTime + 0.25);
+            g.gain.setValueAtTime(0.45, audioCtx.currentTime);
+            g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.35);
+            o.start();
+            o.stop(audioCtx.currentTime + 0.35);
+        } catch (e) {}
+    }
+
     // ── Coin sound (Web Audio API — no external file needed) ──────────────────
     function playCoin() {
         try {
@@ -72,10 +92,12 @@
 
         function step() {
             if (i < seq.length) {
-                nEl.textContent = seq[i++];
+                const num = seq[i++];
+                nEl.textContent = num;
                 nEl.classList.remove('mg-cd-pop');
                 void nEl.offsetWidth;           // force reflow
                 nEl.classList.add('mg-cd-pop');
+                playTick(num);
                 setTimeout(step, 1000);
             } else {
                 // Fade overlay, then 1 s extra pause, then start
