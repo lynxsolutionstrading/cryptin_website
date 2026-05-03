@@ -10,15 +10,14 @@
     if (!wall || !btnMini) return;
 
     const TOTAL = 100;
-    let active     = false;
-    let allSpawned = false;   // true once all 100 coins have been scheduled
-    let spawned    = 0;
-    let caught     = 0;
-    let clicks     = 0;
-    let timers     = [];
-    let liveCoins  = [];
-    let hudEl      = null;
-    let audioCtx   = null;
+    let active    = false;
+    let spawned   = 0;
+    let caught    = 0;
+    let clicks    = 0;
+    let timers    = [];
+    let liveCoins = [];
+    let hudEl     = null;
+    let audioCtx  = null;
 
 
     // ── Countdown tick (3 → low, 2 → mid, 1 → high ding) ────────────────────
@@ -174,7 +173,6 @@
             });
             setTimeout(function () { if (el.parentNode) el.remove(); }, 210);
             liveCoins = liveCoins.filter(function (c) { return c !== el; });
-            checkFinish();
         });
 
         wall.appendChild(el);
@@ -184,7 +182,6 @@
         setTimeout(function () {
             if (el.parentNode) el.remove();
             liveCoins = liveCoins.filter(function (c) { return c !== el; });
-            checkFinish();
         }, (dur + 0.4) * 1000);
     }
 
@@ -254,15 +251,6 @@
         });
     }
 
-    // ── Check whether the round is truly over ────────────────────────────────
-    //   Called after every coin removal. Ends the game only when every coin
-    //   has been spawned AND every live coin has left the screen.
-    function checkFinish() {
-        if (active && allSpawned && liveCoins.length === 0) {
-            finish();
-        }
-    }
-
     // ── End of game round ─────────────────────────────────────────────────────
     function finish() {
         active           = false;
@@ -276,7 +264,7 @@
 
     // ── Begin one full game round ─────────────────────────────────────────────
     function beginGame() {
-        spawned = 0; caught = 0; clicks = 0; allSpawned = false;
+        spawned = 0; caught = 0; clicks = 0;
         timers.forEach(clearTimeout);
         timers = []; liveCoins = [];
 
@@ -294,12 +282,8 @@
                 (function (d) { timers.push(setTimeout(spawnOne, d)); })(delay);
             }
 
-            // Mark all coins as scheduled; the round ends once the last one
-            // falls off screen (checked via checkFinish after each removal).
-            timers.push(setTimeout(function () {
-                allSpawned = true;
-                checkFinish();   // handles the edge case where all were caught already
-            }, delay + 50));
+            // End game 6 s after the last coin is spawned
+            timers.push(setTimeout(finish, delay + 6000));
         });
     }
 
