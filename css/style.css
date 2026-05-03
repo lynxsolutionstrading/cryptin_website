@@ -72,8 +72,9 @@ textarea,
     position: fixed;
     inset: 0;
     z-index: 9999;
-    /* No background â€” bg image + chunks cover the viewport. Once chunks fall,
-       the main page (already rendered behind) shows through directly. */
+    /* Dark background = page stays invisible while cryptin_intro_wall.png loads.
+       Once the shatter animation removes the wall, the main page shows through. */
+    background: #03080D;
     display: flex;
     align-items: center;
     justify-content: center;
