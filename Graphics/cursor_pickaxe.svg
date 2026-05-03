@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
+    <!-- Black outline for visibility on light backgrounds -->
+    <g stroke="#000" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round" fill="#000" fill-opacity="0.95">
+        <path d="M 10.5 10.5 L 27 27 L 25 29 L 9 13 Z"/>
+        <path d="M 1 5 L 5 1 L 17 7 L 13 11 Z"/>
+        <circle cx="11" cy="11" r="3.6"/>
+    </g>
+    <!-- Gold pickaxe head -->
+    <path d="M 1 5 L 5 1 L 17 7 L 13 11 Z" fill="#d4a242" stroke="#5a3814" stroke-width="0.7" stroke-linejoin="round"/>
+    <!-- Iron socket -->
+    <circle cx="11" cy="11" r="3" fill="#c9954a" stroke="#5a3814" stroke-width="0.7"/>
+    <!-- Wood handle -->
+    <path d="M 10.5 10.5 L 27 27 L 25 29 L 9 13 Z" fill="#6b4720" stroke="#2a1808" stroke-width="0.7" stroke-linejoin="round"/>
+    <!-- Center rivet -->
+    <circle cx="11" cy="11" r="1" fill="#2a1808"/>
+</svg>
