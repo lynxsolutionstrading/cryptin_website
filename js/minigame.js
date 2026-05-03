@@ -48,15 +48,13 @@
     }
 
     function playTick(n) {
-        // 3 = short (0.18s), 2 = medium (0.32s), 1 = longer (0.50s)
-        const dur  = n === 1 ? 0.50 : n === 2 ? 0.32 : 0.18;
-        const freq = n === 1 ? 660  : n === 2 ? 550  : 440;
+        const dur  = n === 1 ? 0.26 : n === 2 ? 0.22 : 0.18;
+        const freq = n === 1 ? 560  : n === 2 ? 500  : 440;
         playBeep(freq, dur);
     }
 
     function playGo() {
-        // GO = longest (0.72s), higher pitch
-        playBeep(880, 0.72);
+        playBeep(700, 0.35);
     }
 
     // ── Coin sound (Web Audio API — no external file needed) ──────────────────
@@ -118,11 +116,12 @@
                 playTick(num);
                 setTimeout(step, 1000);
             } else {
-                // Fade overlay, then 1 s extra pause, then start
+                // Fade overlay out, play GO beep, then 1 s pause before game starts
                 wrap.style.transition = 'opacity 0.3s';
                 wrap.style.opacity    = '0';
                 setTimeout(() => {
                     wrap.remove();
+                    playGo();
                     setTimeout(cb, 1000);
                 }, 300);
             }
@@ -290,7 +289,6 @@
         runCountdown(function () {
             active           = true;
             window._mgActive = true;
-            playGo();
             buildHUD();
             refreshHUD();
             wall.addEventListener('click', onMiss);
