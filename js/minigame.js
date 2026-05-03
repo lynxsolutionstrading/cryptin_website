@@ -253,10 +253,10 @@
             refreshHUD();
             wall.addEventListener('click', onMiss);
 
-            // Schedule all 100 coins with irregular gaps (80–300 ms each)
+            // Schedule all 100 coins with irregular gaps (+10 % slower than before)
             var delay = 0;
             for (var i = 0; i < TOTAL; i++) {
-                delay += 115 + Math.random() * 317;
+                delay += 127 + Math.random() * 349;
                 (function (d) { timers.push(setTimeout(spawnOne, d)); })(delay);
             }
 
