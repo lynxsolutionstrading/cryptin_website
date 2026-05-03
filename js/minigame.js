@@ -20,24 +20,43 @@
     let audioCtx  = null;
 
 
-    // ── Countdown tick (3 → low, 2 → mid, 1 → high ding) ────────────────────
-    function playTick(n) {
+    // ── Shared helper: ensure AudioContext is running ─────────────────────────
+    function ensureAudio() {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+    }
+
+    // ── Countdown beeps: deed (3) → deeeed (2) → deeeed (1) → deeeeeeed (GO) ──
+    //   Each beep is a held tone — quick attack, sustained body, sharp cut-off.
+    //   Duration grows with each step to build tension.
+    function playBeep(freq, dur) {
         try {
-            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            ensureAudio();
+            const t = audioCtx.currentTime;
             const o = audioCtx.createOscillator();
             const g = audioCtx.createGain();
-            o.connect(g);
-            g.connect(audioCtx.destination);
+            o.connect(g); g.connect(audioCtx.destination);
             o.type = 'sine';
-            // Pitch rises with tension: 3 = low, 2 = mid, 1 = high
-            const freq = n === 1 ? 880 : n === 2 ? 660 : 520;
-            o.frequency.setValueAtTime(freq, audioCtx.currentTime);
-            o.frequency.exponentialRampToValueAtTime(freq * 0.75, audioCtx.currentTime + 0.25);
-            g.gain.setValueAtTime(0.45, audioCtx.currentTime);
-            g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.35);
-            o.start();
-            o.stop(audioCtx.currentTime + 0.35);
+            o.frequency.setValueAtTime(freq, t);
+            // Flat held tone — no pitch drift
+            g.gain.setValueAtTime(0, t);
+            g.gain.linearRampToValueAtTime(0.48, t + 0.018);   // fast attack
+            g.gain.setValueAtTime(0.48, t + dur - 0.04);       // hold
+            g.gain.linearRampToValueAtTime(0, t + dur);        // sharp release
+            o.start(t); o.stop(t + dur);
         } catch (e) {}
+    }
+
+    function playTick(n) {
+        // 3 = short (0.18s), 2 = medium (0.32s), 1 = longer (0.50s)
+        const dur  = n === 1 ? 0.50 : n === 2 ? 0.32 : 0.18;
+        const freq = n === 1 ? 660  : n === 2 ? 550  : 440;
+        playBeep(freq, dur);
+    }
+
+    function playGo() {
+        // GO = longest (0.72s), higher pitch
+        playBeep(880, 0.72);
     }
 
     // ── Coin sound (Web Audio API — no external file needed) ──────────────────
@@ -271,6 +290,7 @@
         runCountdown(function () {
             active           = true;
             window._mgActive = true;
+            playGo();
             buildHUD();
             refreshHUD();
             wall.addEventListener('click', onMiss);
@@ -290,6 +310,7 @@
     // ── "Start Mini-Game" click ───────────────────────────────────────────────
     btnMini.addEventListener('click', function (e) {
         e.stopPropagation();   // prevent 3-D coin from spawning
+        ensureAudio();         // init AudioContext during user gesture so sounds work later
         btnGroup.style.pointerEvents = 'none';
 
         if (typeof gsap !== 'undefined') {
