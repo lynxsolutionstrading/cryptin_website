@@ -72,9 +72,8 @@ textarea,
     position: fixed;
     inset: 0;
     z-index: 9999;
-    /* Dark background = page stays invisible while cryptin_intro_wall.png loads.
-       Once the shatter animation removes the wall, the main page shows through. */
-    background: #03080D;
+    /* No background on the wall itself — keeps the hero always painted behind it.
+       The #introFoucGuard child div handles the opaque fill during image load. */
     display: flex;
     align-items: center;
     justify-content: center;

@@ -15,13 +15,11 @@
         html, body, * { cursor: url("Graphics/cursor_game.png") 2 2, crosshair !important; }
         input, textarea, [contenteditable] { cursor: text !important; }
         /* ── Flash-of-content prevention ──────────────────────────────────────
-           Applied inline (before style.css loads) so the intro wall is
-           opaque-black the instant the browser first paints — even while
-           cryptin_intro_wall.png is still downloading.
-           overflow is intentionally NOT set here — the fixed-position wall
-           already covers everything, and body overflow:hidden would prevent
-           the hero section from rendering behind the wall during the shatter. */
-        #intro-wall { background: #03080D; }
+           The wall div itself stays transparent so the browser always paints
+           the page behind it (prevents black during shatter animation).
+           A child div #introFoucGuard provides the opaque fill while the
+           intro image is loading — it gets removed the instant ENTER is clicked. */
+        #introFoucGuard { position:fixed; inset:0; background:#03080D; pointer-events:none; z-index:0; }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
     <script src="js/three.min.js"></script>
@@ -30,6 +28,8 @@
 
     <!-- ===== INTRO WALL — fullscreen image + ENTER button + GSAP-driven shatter ===== -->
     <div id="intro-wall" class="intro-wall">
+        <!-- FOUC guard: opaque fill while the intro image loads; removed on ENTER click -->
+        <div id="introFoucGuard"></div>
         <!-- Static background image, replaced by SVG chunks once shatter starts -->
         <img class="intro-bg-img" id="introBgImg" src="Graphics/cryptin_intro_wall.png" alt="">
 
