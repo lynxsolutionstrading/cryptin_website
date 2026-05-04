@@ -54,7 +54,7 @@
     }
 
     function playGo() {
-        playBeep(900, 0.50);
+        playBeep(1200, 1.0);
     }
 
     // ── Coin sound (Web Audio API — no external file needed) ──────────────────
