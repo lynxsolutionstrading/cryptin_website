@@ -77,6 +77,8 @@ textarea,
     align-items: center;
     justify-content: center;
     transition: opacity 0.55s ease;
+    will-change: opacity;     /* own compositing layer → hero always rendered
+                                 behind loader; no black flash when wall shatters */
 }
 #pageLoader.ldr-out {
     opacity: 0;

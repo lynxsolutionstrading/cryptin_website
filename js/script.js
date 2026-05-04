@@ -22,11 +22,29 @@
 
     function onPageReady() {
         if (loader) {
-            loader.classList.add('ldr-out');
-            setTimeout(() => {
-                if (loader.parentNode) loader.remove();
-                revealWall();
-            }, 560);   // matches loader fade-out duration (0.55s)
+            // ── Core fix: show wall WHILE loader still covers everything ──────────
+            // Step 1: decode the wall image first so it paints in the same frame
+            const showWall = () => {
+                wall.style.transition = 'none';
+                wall.style.opacity    = '1';
+                // Two rAFs → browser commits the wall repaint before loader fades.
+                // This guarantees the stone wall is fully on-screen when the
+                // loader becomes transparent — main page is never exposed.
+                requestAnimationFrame(() => {
+                    requestAnimationFrame(() => {
+                        wall.style.transition = '';   // hand opacity back to GSAP
+                        loader.classList.add('ldr-out');
+                        setTimeout(() => { if (loader.parentNode) loader.remove(); }, 580);
+                    });
+                });
+            };
+            // bgImg is guaranteed complete at window.load; decode() ensures it is
+            // painted (not just downloaded) before we snap the wall to visible.
+            if (typeof bgImg.decode === 'function') {
+                bgImg.decode().then(showWall).catch(showWall);
+            } else {
+                showWall();
+            }
         } else {
             revealWall();
         }
