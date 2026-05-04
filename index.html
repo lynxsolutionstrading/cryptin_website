@@ -19,7 +19,7 @@
            the page behind it (prevents black during shatter animation).
            A child div #introFoucGuard provides the opaque fill while the
            intro image is loading — it gets removed the instant ENTER is clicked. */
-        #introFoucGuard { position:absolute; inset:0; background:#03080D; pointer-events:none; }
+        #introFoucGuard { position:absolute; inset:0; background:#03080D; pointer-events:none; z-index:-1; }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
     <script src="js/three.min.js"></script>
