@@ -150,6 +150,7 @@
 
         const el = document.createElement('div');
         el.className = 'mg-coin';
+        el._spawnedAt = performance.now();   // reaction-time guard
         el.style.cssText =
             'width:'  + total + 'px;' +
             'height:' + total + 'px;' +
@@ -173,6 +174,15 @@
         el.addEventListener('click', function (e) {
             e.stopPropagation();
             if (el._caught) return;   // already caught — ignore double-clicks
+
+            // Anti-cheat 1: block all programmatic dispatchEvent() clicks —
+            // the browser guarantees isTrusted=false for synthetic events.
+            if (!e.isTrusted) return;
+
+            // Anti-cheat 2: humans need at least 80 ms to react after a coin appears.
+            // Anything faster is a bot or native automation triggering on spawn.
+            if (performance.now() - el._spawnedAt < 80) return;
+
             el._caught = true;
 
             clicks++;
