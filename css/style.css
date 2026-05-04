@@ -72,8 +72,8 @@ textarea,
     position: fixed;
     inset: 0;
     z-index: 9999;
-    /* No background on the wall itself — keeps the hero always painted behind it.
-       The #introFoucGuard child div handles the opaque fill during image load. */
+    /* No background — keeps the hero always composited behind it so it shows
+       through the gaps between falling chunks during the shatter animation. */
     display: flex;
     align-items: center;
     justify-content: center;

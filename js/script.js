@@ -99,10 +99,6 @@
         triggered = true;
         enter.style.pointerEvents = 'none';
 
-        // Remove the FOUC guard so the page content shows through as chunks fall
-        const foucGuard = document.getElementById('introFoucGuard');
-        if (foucGuard) foucGuard.remove();
-
         const tl = gsap.timeline({ onComplete: () => wall.remove() });
 
         // ENTER fades out
