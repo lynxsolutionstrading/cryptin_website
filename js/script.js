@@ -6,7 +6,8 @@
     const chunksG = document.getElementById('introChunks');
     const cracksG = document.getElementById('introCracks');
     const dustG   = document.getElementById('introDust');
-    const enter   = document.getElementById('introEnter');
+    const enter    = document.getElementById('introEnter');
+    const miniGame = document.getElementById('introMiniGame');
     if (!wall || !enter || typeof gsap === 'undefined') return;
 
     document.body.classList.add('intro-locked');
@@ -101,8 +102,9 @@
 
         const tl = gsap.timeline({ onComplete: () => wall.remove() });
 
-        // ENTER fades out
-        tl.to(enter, { opacity: 0, duration: 0.2, ease: 'power1.out' }, 0);
+        // ENTER + Mini-Game link fade out together
+        const fadeTargets = miniGame ? [enter, miniGame] : [enter];
+        tl.to(fadeTargets, { opacity: 0, duration: 0.2, ease: 'power1.out' }, 0);
 
         // Bg image → chunks at t=0 so the wall breaks the moment ENTER is clicked
         tl.to(bgImg, { opacity: 0, duration: 0.12 }, 0);
