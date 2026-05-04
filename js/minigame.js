@@ -116,14 +116,17 @@
                 playTick(num);
                 setTimeout(step, 1000);
             } else {
-                // Fade overlay out, play GO beep, then 1 s pause before game starts
-                wrap.style.transition = 'opacity 0.3s';
-                wrap.style.opacity    = '0';
+                // Show GO, play GO beep, then fade out and start game
+                nEl.textContent = 'GO';
+                nEl.classList.remove('mg-cd-pop');
+                void nEl.offsetWidth;
+                nEl.classList.add('mg-cd-pop');
+                playGo();
                 setTimeout(() => {
-                    wrap.remove();
-                    playGo();
-                    setTimeout(cb, 1000);
-                }, 300);
+                    wrap.style.transition = 'opacity 0.3s';
+                    wrap.style.opacity    = '0';
+                    setTimeout(() => { wrap.remove(); cb(); }, 300);
+                }, 3000);   // matches GO beep duration (3.0s)
             }
         }
         step();
