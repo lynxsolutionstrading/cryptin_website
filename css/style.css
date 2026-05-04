@@ -2008,29 +2008,36 @@ input { font-family: inherit; }
     text-shadow: 0 0 22px rgba(212, 160, 48, 0.42);
     line-height: 1;
 }
-.mg-rating {
+.mg-score-box {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 4px;
+    gap: 6px;
     margin-bottom: 28px;
+    padding: 18px 48px;
+    background: linear-gradient(160deg, rgba(118, 74, 28, 0.18), rgba(30, 16, 4, 0.55));
+    border: 1px solid rgba(212, 160, 48, 0.38);
+    border-radius: 10px;
+    box-shadow:
+        0 0 28px rgba(212, 160, 48, 0.10),
+        inset 0 1px 0 rgba(244, 213, 144, 0.08);
 }
-.mg-rating-label {
+.mg-score-label {
     font-family: 'Cinzel', serif;
     font-size: 0.68rem;
-    letter-spacing: 0.14em;
-    color: rgba(244, 213, 144, 0.48);
+    letter-spacing: 0.18em;
+    color: rgba(244, 213, 144, 0.55);
     text-transform: uppercase;
 }
-.mg-rating-val {
+.mg-score-val {
     font-family: 'Cinzel', serif;
-    font-size: clamp(2.2rem, 6vw, 3.2rem);
+    font-size: clamp(2.4rem, 6vw, 3.4rem);
     font-weight: 900;
     color: #f4d590;
     line-height: 1;
     text-shadow:
-        0 0 40px rgba(212, 160, 48, 0.6),
-        0 0 12px rgba(212, 160, 48, 0.3),
+        0 0 40px rgba(212, 160, 48, 0.65),
+        0 0 14px rgba(212, 160, 48, 0.35),
         0 3px 10px rgba(0, 0, 0, 0.8);
 }
 

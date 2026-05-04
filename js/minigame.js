@@ -233,9 +233,9 @@
                 '<div class="mg-res-stat"><span>Clicks</span><b>' + clicks + '</b></div>' +
                 '<div class="mg-res-stat"><span>Accuracy</span><b>' + (clicks > 0 ? Math.round((caught / clicks) * 100) : 0) + '%</b></div>' +
             '</div>' +
-            '<div class="mg-rating">' +
-                '<span class="mg-rating-label">Score</span>' +
-                '<b class="mg-rating-val">' + score + '%</b>' +
+            '<div class="mg-score-box">' +
+                '<span class="mg-score-label">Score</span>' +
+                '<b class="mg-score-val">' + score + '%</b>' +
             '</div>' +
             '<div class="mg-res-btns">' +
                 '<button class="mg-again">Again</button>' +
