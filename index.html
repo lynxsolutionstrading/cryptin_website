@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cryptin — Neuigkeiten</title>
     <link rel="icon" type="image/png" href="Graphics/cryptin_coin_logo.png">
-    <link rel="preload" as="image" href="Graphics/cryptin_intro_wall.png" fetchpriority="high">
+    <link rel="preload" as="image" href="Graphics/cryptin_intro_wall.jpg" fetchpriority="high">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -23,13 +23,13 @@
     <!-- ===== INTRO WALL — fullscreen image + ENTER button + GSAP-driven shatter ===== -->
     <div id="intro-wall" class="intro-wall">
         <!-- Static background image, replaced by SVG chunks once shatter starts -->
-        <img class="intro-bg-img" id="introBgImg" src="Graphics/cryptin_intro_wall.png" alt="">
+        <img class="intro-bg-img" id="introBgImg" src="Graphics/cryptin_intro_wall.jpg" alt="">
 
         <!-- SVG canvas for cracks + falling chunks (filled by JS at click) -->
         <svg class="intro-svg" id="introSvg" viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
             <defs>
                 <pattern id="introImgPattern" patternUnits="userSpaceOnUse" x="0" y="0" width="1920" height="1080">
-                    <image href="Graphics/cryptin_intro_wall.png" x="0" y="0" width="1920" height="1080" preserveAspectRatio="none"/>
+                    <image href="Graphics/cryptin_intro_wall.jpg" x="0" y="0" width="1920" height="1080" preserveAspectRatio="none"/>
                 </pattern>
                 <radialGradient id="introBurst" cx="0.5" cy="0.5" r="0.5">
                     <stop offset="0%"   stop-color="#fff5d2" stop-opacity="1"/>

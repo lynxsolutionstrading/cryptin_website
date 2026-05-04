@@ -10,6 +10,18 @@
     const miniGame = document.getElementById('introMiniGame');
     if (!wall || !enter || typeof gsap === 'undefined') return;
 
+    // FOUC prevention: opaque until the intro image has loaded.
+    // Removed as soon as the image fires 'load' (or instantly if already cached)
+    // so Chrome always paints the hero behind the transparent wall before ENTER is clicked.
+    wall.style.background = '#03080D';
+    function clearWallBg() { wall.style.background = ''; }
+    if (bgImg.complete) {
+        clearWallBg();
+    } else {
+        bgImg.addEventListener('load',  clearWallBg, { once: true });
+        bgImg.addEventListener('error', clearWallBg, { once: true });
+    }
+
     document.body.classList.add('intro-locked');
     document.documentElement.classList.add('intro-locked');
 
