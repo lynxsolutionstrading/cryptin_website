@@ -10,6 +10,36 @@
     const miniGame = document.getElementById('introMiniGame');
     if (!wall || !enter || typeof gsap === 'undefined') return;
 
+    // ── Page-load gate: fade out loader, then fade intro wall in calmly ──────
+    const loader = document.getElementById('pageLoader');
+
+    function revealWall() {
+        wall.style.transition = 'opacity 0.9s ease';
+        wall.style.opacity    = '1';
+        // Remove transition after it finishes so GSAP can control opacity freely
+        setTimeout(() => { wall.style.transition = ''; }, 950);
+    }
+
+    function onPageReady() {
+        if (loader) {
+            loader.classList.add('ldr-out');
+            setTimeout(() => {
+                if (loader.parentNode) loader.remove();
+                revealWall();
+            }, 560);   // matches loader fade-out duration (0.55s)
+        } else {
+            revealWall();
+        }
+    }
+
+    if (document.readyState === 'complete') {
+        // Already fully loaded (e.g. hard-cached) — tiny delay so the fade
+        // still registers as a transition rather than an instant pop
+        setTimeout(onPageReady, 60);
+    } else {
+        window.addEventListener('load', onPageReady, { once: true });
+    }
+
     // FOUC prevention: opaque until the intro image has loaded.
     // Removed as soon as the image fires 'load' (or instantly if already cached)
     // so Chrome always paints the hero behind the transparent wall before ENTER is clicked.

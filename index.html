@@ -14,11 +14,18 @@
         /* Cursor override — path relative to HTML file, not CSS subfolder */
         html, body, * { cursor: url("Graphics/cursor_game.png") 2 2, crosshair !important; }
         input, textarea, [contenteditable] { cursor: text !important; }
+        /* Intro wall starts invisible; JS fades it in after all resources are loaded */
+        #intro-wall { opacity: 0; }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
     <script src="js/three.min.js"></script>
 </head>
 <body>
+
+    <!-- ===== PAGE LOADER — covers everything while resources load ===== -->
+    <div id="pageLoader" aria-hidden="true">
+        <div class="loader-ring"></div>
+    </div>
 
     <!-- ===== INTRO WALL — fullscreen image + ENTER button + GSAP-driven shatter ===== -->
     <div id="intro-wall" class="intro-wall">

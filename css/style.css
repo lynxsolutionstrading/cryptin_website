@@ -66,6 +66,36 @@ textarea,
 
 
 /* ====================================================================
+   PAGE LOADER — golden spinner shown while resources load
+==================================================================== */
+#pageLoader {
+    position: fixed;
+    inset: 0;
+    z-index: 99999;           /* above intro-wall (9999) and everything else */
+    background: var(--bg-0);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.55s ease;
+}
+#pageLoader.ldr-out {
+    opacity: 0;
+    pointer-events: none;
+}
+.loader-ring {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    border: 2.5px solid rgba(160, 106, 44, 0.18);
+    border-top-color: var(--gold-pale);
+    animation: ldr-spin 0.82s linear infinite;
+    box-shadow: 0 0 18px rgba(216, 160, 92, 0.15);
+}
+@keyframes ldr-spin {
+    to { transform: rotate(360deg); }
+}
+
+/* ====================================================================
    INTRO WALL â€” fullscreen image + GSAP shatter on ENTER
 ==================================================================== */
 .intro-wall {
