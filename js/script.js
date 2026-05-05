@@ -266,3 +266,39 @@ window.addEventListener('mouseup', () => {
 window.addEventListener('blur', () => {
     document.documentElement.classList.remove('clicking');
 });
+
+// ===== LIVE STRIP COUNTER ANIMATION =====
+(function initCounters() {
+    const easeOut = t => 1 - Math.pow(1 - t, 3);
+
+    function animateCounter(el, target, duration) {
+        const start = performance.now();
+        const step = now => {
+            const progress = Math.min((now - start) / duration, 1);
+            const value = Math.round(easeOut(progress) * target);
+            // Format with dots as thousands separator (German style)
+            el.textContent = value >= 1000
+                ? value.toLocaleString('de-DE')
+                : String(value);
+            if (progress < 1) requestAnimationFrame(step);
+        };
+        requestAnimationFrame(step);
+    }
+
+    // Animate .live-val elements when the live strip enters view
+    const liveVals = document.querySelectorAll('.live-val[data-count]');
+    if (!liveVals.length) return;
+
+    const observer = new IntersectionObserver(entries => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const el = entry.target;
+                const target = parseInt(el.dataset.count, 10);
+                animateCounter(el, target, 1400 + Math.random() * 400);
+                observer.unobserve(el);
+            }
+        });
+    }, { threshold: 0.5 });
+
+    liveVals.forEach(el => observer.observe(el));
+})();
