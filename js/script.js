@@ -289,6 +289,7 @@ window.addEventListener('blur', () => {
 });
 
 // ===== LIVE STRIP COUNTER ANIMATION =====
+// Bar is now fixed at the bottom — counters start counting up on page load.
 (function initCounters() {
     const easeOut = t => 1 - Math.pow(1 - t, 3);
 
@@ -297,7 +298,6 @@ window.addEventListener('blur', () => {
         const step = now => {
             const progress = Math.min((now - start) / duration, 1);
             const value = Math.round(easeOut(progress) * target);
-            // Format with dots as thousands separator (German style)
             el.textContent = value >= 1000
                 ? value.toLocaleString('de-DE')
                 : String(value);
@@ -306,20 +306,21 @@ window.addEventListener('blur', () => {
         requestAnimationFrame(step);
     }
 
-    // Animate .live-val elements when the live strip enters view
     const liveVals = document.querySelectorAll('.live-val[data-count]');
     if (!liveVals.length) return;
 
-    const observer = new IntersectionObserver(entries => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                const el = entry.target;
-                const target = parseInt(el.dataset.count, 10);
-                animateCounter(el, target, 1400 + Math.random() * 400);
-                observer.unobserve(el);
-            }
+    // Start immediately when the page (and intro wall) is ready — small stagger
+    // so each number counts up at a slightly different speed for visual variety.
+    function startCounters() {
+        liveVals.forEach((el, i) => {
+            const target = parseInt(el.dataset.count, 10);
+            setTimeout(() => animateCounter(el, target, 1400 + i * 120), i * 80);
         });
-    }, { threshold: 0.5 });
+    }
 
-    liveVals.forEach(el => observer.observe(el));
+    if (document.readyState === 'complete') {
+        startCounters();
+    } else {
+        window.addEventListener('load', startCounters, { once: true });
+    }
 })();
