@@ -273,7 +273,7 @@
                 const t    = now + 0.02 + Math.random() * 1.8;
                 const freq = 35 + Math.random() * 75;    // 35–110 Hz — deeper/dumpfer
                 const gain = 0.80 + Math.random() * 0.80; // +100% louder
-                const dur  = 0.18 + Math.random() * 0.18; // 0.18–0.36s — longer
+                const dur  = 0.28 + Math.random() * 0.22; // 0.28–0.50s — longer
                 stoneImpact(t, freq, gain, dur);
             }
             // 6 — Dust / high-freq hiss (disabled)
