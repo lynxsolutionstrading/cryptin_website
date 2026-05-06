@@ -217,8 +217,8 @@
             const bn  = brownNoiseBuf(3.0);
             const wn  = whiteBuf(3.0);
 
-            // 1 — Very soft initial crack
-            play(wn,  now,        0.06,  300, 2000, 0.08, 0.001);
+            // 1 — Initial crack (disabled for test)
+            // play(wn,  now,        0.06,  300, 2000, 0.08, 0.001);
             // 2 — Sub-bass impact pulse
             play(bn,  now + 0.01, 0.55,   20,  180, 0.9,  0.001);
             // 3 — Deep stone rumble
