@@ -232,7 +232,7 @@
                 const t  = now + 0.02 + Math.random() * 1.8;
                 const lo = 30  + Math.random() * 60;      // 30–90 Hz  (very deep)
                 const hi = lo  + 80  + Math.random() * 120; // ~110–270 Hz (dull thud, no brightness)
-                const gv = 0.5 + Math.random() * 0.5;     // 0.5–1.0  (loud)
+                const gv = 0.55 + Math.random() * 0.55;    // 0.55–1.1  (+10%)
                 const dv = 0.10 + Math.random() * 0.20;   // 0.10–0.30s (heavy block resonance)
                 play(brownNoiseBuf(dv + 0.1), t, dv, lo, hi, gv, 0.001);
             }
