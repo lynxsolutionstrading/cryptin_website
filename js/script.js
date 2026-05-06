@@ -227,6 +227,31 @@
             // play(bn,  now + 0.08, 1.80,   80,  550, 0.55, 0.001);
             // 4b — Mid crumble layer (disabled)
             // play(bn,  now + 0.05, 1.60,  200,  900, 0.40, 0.001);
+
+            // 7 — Deep bass hit: sine with pitch fall (sub-bass punch)
+            (function bassTone() {
+                // Sub layer: pure sine 80 Hz → 36 Hz (1.1s)
+                const o1 = ctx.createOscillator(); o1.type = 'sine';
+                o1.frequency.setValueAtTime(80, now);
+                o1.frequency.exponentialRampToValueAtTime(36, now + 1.1);
+                const g1 = ctx.createGain();
+                g1.gain.setValueAtTime(0.001, now);
+                g1.gain.linearRampToValueAtTime(1.6, now + 0.006);
+                g1.gain.exponentialRampToValueAtTime(0.001, now + 1.1);
+                o1.connect(g1); g1.connect(ctx.destination);
+                o1.start(now); o1.stop(now + 1.15);
+
+                // Harmonic warmth: triangle at octave 160 Hz → 72 Hz (0.65s)
+                const o2 = ctx.createOscillator(); o2.type = 'triangle';
+                o2.frequency.setValueAtTime(160, now);
+                o2.frequency.exponentialRampToValueAtTime(72, now + 0.65);
+                const g2 = ctx.createGain();
+                g2.gain.setValueAtTime(0.001, now);
+                g2.gain.linearRampToValueAtTime(0.45, now + 0.005);
+                g2.gain.exponentialRampToValueAtTime(0.001, now + 0.65);
+                o2.connect(g2); g2.connect(ctx.destination);
+                o2.start(now); o2.stop(now + 0.70);
+            })();
             // 5 — Realistic stone block impacts
             // Layer A: hard white-noise transient (stone surface contact, 8ms)
             // Layer B: sub-bass brown-noise body (mass/weight of the block, ~150ms)
