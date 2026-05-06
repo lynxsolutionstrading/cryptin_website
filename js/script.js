@@ -1,5 +1,13 @@
 // ===== INTRO WALL — fullscreen image shatters into bricks via GSAP =====
 (function initIntro() {
+    // ── Kill browser scroll restoration immediately so a hard-reload with
+    //    '#' in the URL never causes the page to start at a scrolled position.
+    //    This must happen before any layout/measurement code runs.
+    if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+    window.scrollTo(0, 0);
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+
     const wall    = document.getElementById('intro-wall');
     const bgImg   = document.getElementById('introBgImg');
     const svg     = document.getElementById('introSvg');
@@ -126,8 +134,18 @@
     const introLogo = document.getElementById('introLogo');
     const heroLogo  = document.querySelector('.hero-logo');
 
+    let _syncLogoAttempts = 0;
     function syncIntroLogoPos() {
         if (!introLogo || !heroLogo) return;
+        const r = heroLogo.getBoundingClientRect();
+        // Guard: layout not ready yet if width is 0  OR  the hero logo is
+        // sitting at the very top (top < 60 px means the hero section hasn't
+        // been given its full height yet — font/image still loading).
+        // Retry every 50 ms for up to 3 seconds (60 attempts).
+        if (r.width === 0 || r.top < 60) {
+            if (++_syncLogoAttempts < 60) setTimeout(syncIntroLogoPos, 50);
+            return;
+        }
         // Both logos run heroLogoFloat. getBoundingClientRect already includes
         // the current transform offset — subtract it so the intro-logo's anchor
         // is the natural position, otherwise the float gets applied twice.
@@ -140,12 +158,12 @@
                 translateY = v[5] || 0;
             }
         }
-        const r = heroLogo.getBoundingClientRect();
-        if (r.width === 0) return;
-        introLogo.style.left   = r.left + 'px';
-        introLogo.style.top    = (r.top - translateY) + 'px';
-        introLogo.style.width  = r.width + 'px';
-        introLogo.style.height = r.height + 'px';
+        _syncLogoAttempts = 0;
+        introLogo.style.left      = r.left + 'px';
+        introLogo.style.top       = (r.top - translateY) + 'px';
+        introLogo.style.width     = r.width + 'px';
+        introLogo.style.height    = r.height + 'px';
+        introLogo.style.transform = 'none'; // clear CSS fallback transform
     }
     syncIntroLogoPos();
     window.addEventListener('resize', syncIntroLogoPos);
@@ -197,7 +215,10 @@
         tl.to(wall, { opacity: 0, duration: 0.55, ease: 'power2.out' }, 1.3);
 
         // Unlock scroll the moment the wall finishes fading (~1.85s)
+        // Also force scroll to top — the '#' URL or browser scroll-restore
+        // might have left the page at a non-zero offset while locked.
         tl.add(() => {
+            window.scrollTo(0, 0);
             document.body.classList.remove('intro-locked');
             document.documentElement.classList.remove('intro-locked');
         }, 1.85);
