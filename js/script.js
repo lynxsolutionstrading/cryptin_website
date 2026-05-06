@@ -191,24 +191,10 @@
                 o.start(t); o.stop(t + dur + 0.05);
             }
 
-            // — Main impact: 3 inharmonic metallic partials
-            tone(4200, now,        0.85, 0.90, 0.8);
-            tone(6800, now,        0.60, 0.45, 0.7);
-            tone(9600, now,        0.38, 0.20, 0.5);
-
-            // — First bounce (0.36s later, softer)
-            tone(4200, now + 0.36, 0.32, 0.48, 0.7);
-            tone(6800, now + 0.36, 0.22, 0.22, 0.5);
-            tone(9600, now + 0.36, 0.14, 0.10, 0.3);
-
-            // — Second tiny bounce (0.56s)
-            tone(4200, now + 0.56, 0.16, 0.20, 0.5);
-            tone(6800, now + 0.56, 0.10, 0.09, 0.3);
-
-            // — Dust: cluster of closely-spaced sines — beating creates soft shimmer
-            [195, 218, 247, 281, 328, 386].forEach((f, i) => {
-                tone(f, now + 0.70 + i * 0.016, 0.55, 0.032, 22);
-            });
+            // — Kurzer Münzklang: 3 inharmonische Partials, nicht zu hell
+            tone(2100, now, 0.55, 0.85, 0.7);
+            tone(3500, now, 0.40, 0.45, 0.5);
+            tone(5100, now, 0.28, 0.15, 0.3);
 
             setTimeout(() => ctx.close().catch(() => {}), 3000);
         } catch(e) {}
