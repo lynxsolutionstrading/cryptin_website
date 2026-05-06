@@ -236,7 +236,7 @@
                 play(brownNoiseBuf(dv + 0.06), t, dv, lo, hi, gv, 0.001);
             }
             // 6 — Dust / high-freq hiss (fades away)
-            play(wn,  now + 0.08, 2.20, 2500, 11000, 0.09, 0.001);
+            play(wn,  now + 0.08, 2.20, 2500, 11000, 0.027, 0.001);
 
             setTimeout(() => ctx.close().catch(()=>{}), 4000);
         } catch(e) { /* AudioContext unavailable — silent fail */ }
