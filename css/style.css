@@ -184,7 +184,7 @@ textarea,
     animation: heroLogoFloat 5s ease-in-out infinite;
     /* Fallback position — centred, ~32 % from top (matches hero section + -100px offset) */
     left: 50%;
-    top: 32%;
+    top: 26%;
     transform: translate(-50%, -50%);
     width: min(520px, 55vw);
 }
@@ -784,7 +784,7 @@ input { font-family: inherit; }
     z-index: 5;
     text-align: center;
     padding: 2rem;
-    margin-top: -100px; /* shift logo 100px upward — intro logo follows via JS sync */
+    margin-top: -200px; /* shift logo 200px upward — intro logo follows via JS sync */
 }
 
 .hero-logo {
