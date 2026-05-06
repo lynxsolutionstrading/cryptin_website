@@ -221,8 +221,8 @@
             // play(wn,  now,        0.06,  300, 2000, 0.08, 0.001);
             // 2 — Sub-bass impact pulse (disabled — sounds like gong)
             // play(bn,  now + 0.01, 0.55,   20,  180, 0.9,  0.001);
-            // 3 — Deep stone rumble
-            play(bn,  now + 0.03, 2.20,   40,  320, 0.75, 0.001);
+            // 3 — Deep stone rumble (disabled — gong-like)
+            // play(bn,  now + 0.03, 2.20,   40,  320, 0.75, 0.001);
             play(bn,  now + 0.08, 1.80,   80,  550, 0.55, 0.001);
             // 4 — Mid crumble layer
             play(bn,  now + 0.05, 1.60,  200,  900, 0.40, 0.001);
