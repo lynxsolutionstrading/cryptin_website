@@ -249,8 +249,8 @@
             function stoneImpact(t, freq, gain, dur) {
                 // A — Hard transient: white noise, filtered 300–2500 Hz, 8 ms
                 const ws = ctx.createBufferSource(); ws.buffer = mkWhite(0.02);
-                const wlp = ctx.createBiquadFilter(); wlp.type='lowpass';  wlp.frequency.value=900;
-                const whp = ctx.createBiquadFilter(); whp.type='highpass'; whp.frequency.value=150;
+                const wlp = ctx.createBiquadFilter(); wlp.type='lowpass';  wlp.frequency.value=350;
+                const whp = ctx.createBiquadFilter(); whp.type='highpass'; whp.frequency.value=80;
                 const wg  = ctx.createGain();
                 wg.gain.setValueAtTime(gain * 1.5, t);
                 wg.gain.exponentialRampToValueAtTime(0.001, t + 0.008);
@@ -259,7 +259,7 @@
 
                 // B — Sub-bass body: brown noise, filtered 40–200 Hz, slower decay
                 const bs  = ctx.createBufferSource(); bs.buffer = mkBrown(dur + 0.05);
-                const blp = ctx.createBiquadFilter(); blp.type='lowpass';  blp.frequency.value=freq*1.4;
+                const blp = ctx.createBiquadFilter(); blp.type='lowpass';  blp.frequency.value=freq*0.9;
                 const bhp = ctx.createBiquadFilter(); bhp.type='highpass'; bhp.frequency.value=freq*0.35;
                 const bg  = ctx.createGain();
                 bg.gain.setValueAtTime(0.001, t);
