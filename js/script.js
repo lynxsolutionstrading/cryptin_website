@@ -191,10 +191,10 @@
                 o.start(t); o.stop(t + dur + 0.05);
             }
 
-            // — Münze auf Tisch: noch dumpfer
-            tone( 650, now, 1.00, 0.35, 0.5);
-            tone(1200, now, 0.65, 0.16, 0.4);
-            tone(1900, now, 0.38, 0.05, 0.3);
+            // — Münze auf Tisch: sehr dumpf
+            tone( 380, now, 0.90, 0.38, 0.5);
+            tone( 720, now, 0.60, 0.15, 0.4);
+            tone(1150, now, 0.35, 0.04, 0.3);
 
             setTimeout(() => ctx.close().catch(() => {}), 3000);
         } catch(e) {}
