@@ -259,7 +259,7 @@
 
                 // B — Sub-bass body: brown noise, filtered 40–200 Hz, slower decay
                 const bs  = ctx.createBufferSource(); bs.buffer = mkBrown(dur + 0.05);
-                const blp = ctx.createBiquadFilter(); blp.type='lowpass';  blp.frequency.value=freq*2.5;
+                const blp = ctx.createBiquadFilter(); blp.type='lowpass';  blp.frequency.value=freq*1.4;
                 const bhp = ctx.createBiquadFilter(); bhp.type='highpass'; bhp.frequency.value=freq*0.35;
                 const bg  = ctx.createGain();
                 bg.gain.setValueAtTime(0.001, t);
@@ -272,8 +272,8 @@
             for (let i = 0; i < 22; i++) {
                 const t    = now + 0.02 + Math.random() * 1.8;
                 const freq = 35 + Math.random() * 75;    // 35–110 Hz — deeper/dumpfer
-                const gain = 0.26 + Math.random() * 0.26; // +30% louder
-                const dur  = 0.10 + Math.random() * 0.14; // 0.10–0.24s
+                const gain = 0.31 + Math.random() * 0.31; // +20% louder
+                const dur  = 0.18 + Math.random() * 0.18; // 0.18–0.36s — longer
                 stoneImpact(t, freq, gain, dur);
             }
             // 6 — Dust / high-freq hiss (disabled)
