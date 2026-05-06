@@ -227,14 +227,45 @@
             // play(bn,  now + 0.08, 1.80,   80,  550, 0.55, 0.001);
             // 4b — Mid crumble layer (disabled)
             // play(bn,  now + 0.05, 1.60,  200,  900, 0.40, 0.001);
-            // 5 — Heavy stone block impacts (loud, dull, low-freq thuds)
+            // 5 — Realistic stone block impacts
+            // Each impact = decaying triangle oscillator (the "klonk" resonance)
+            // + short noise burst (surface contact texture)
+            function stoneImpact(t, freq, gain, dur) {
+                // Tonal body: triangle wave, pitch falls fast (stone settles)
+                const osc = ctx.createOscillator();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(freq, t);
+                osc.frequency.exponentialRampToValueAtTime(freq * 0.35, t + dur * 0.4);
+
+                const oscGain = ctx.createGain();
+                oscGain.gain.setValueAtTime(0.001, t);
+                oscGain.gain.linearRampToValueAtTime(gain * 0.7, t + 0.004);
+                oscGain.gain.exponentialRampToValueAtTime(0.001, t + dur);
+
+                // Noise texture: very short bandpass burst at impact
+                const blen = Math.ceil(ctx.sampleRate * (dur + 0.05));
+                const nbuf = ctx.createBuffer(1, blen, ctx.sampleRate);
+                const nd   = nbuf.getChannelData(0);
+                for (let j = 0; j < blen; j++) nd[j] = Math.random() * 2 - 1;
+                const nsrc = ctx.createBufferSource(); nsrc.buffer = nbuf;
+                const nbp  = ctx.createBiquadFilter();
+                nbp.type = 'bandpass'; nbp.frequency.value = freq * 2.2; nbp.Q.value = 0.6;
+                const ngain = ctx.createGain();
+                ngain.gain.setValueAtTime(gain * 0.45, t);
+                ngain.gain.exponentialRampToValueAtTime(0.001, t + dur * 0.25);
+
+                osc.connect(oscGain);   oscGain.connect(ctx.destination);
+                nsrc.connect(nbp); nbp.connect(ngain); ngain.connect(ctx.destination);
+                osc.start(t); osc.stop(t + dur + 0.05);
+                nsrc.start(t); nsrc.stop(t + dur + 0.05);
+            }
+
             for (let i = 0; i < 22; i++) {
-                const t  = now + 0.02 + Math.random() * 1.8;
-                const lo = 30  + Math.random() * 60;      // 30–90 Hz  (very deep)
-                const hi = lo  + 80  + Math.random() * 120; // ~110–270 Hz (dull thud, no brightness)
-                const gv = 0.55 + Math.random() * 0.55;    // 0.55–1.1  (+10%)
-                const dv = 0.10 + Math.random() * 0.20;   // 0.10–0.30s (heavy block resonance)
-                play(brownNoiseBuf(dv + 0.1), t, dv, lo, hi, gv, 0.001);
+                const t    = now + 0.02 + Math.random() * 1.8;
+                const freq = 80 + Math.random() * 160;   // 80–240 Hz (heavy stone range)
+                const gain = 0.55 + Math.random() * 0.55;
+                const dur  = 0.18 + Math.random() * 0.28; // 0.18–0.46s
+                stoneImpact(t, freq, gain, dur);
             }
             // 6 — Dust / high-freq hiss (disabled)
             // play(wn,  now + 0.08, 2.20, 2500, 11000, 0.027, 0.001);
