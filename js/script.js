@@ -228,17 +228,17 @@
             // 4b — Mid crumble layer (disabled)
             // play(bn,  now + 0.05, 1.60,  200,  900, 0.40, 0.001);
 
-            // 7 — Dumpfer Bass-Schlag: reiner Sinus mit schnellem Pitch-Fall
+            // 7 — Kurzer tiefer Bass-Schlag
             (function bassTone() {
                 const o = ctx.createOscillator(); o.type = 'sine';
-                o.frequency.setValueAtTime(65, now);
-                o.frequency.exponentialRampToValueAtTime(28, now + 0.45);
+                o.frequency.setValueAtTime(55, now);
+                o.frequency.exponentialRampToValueAtTime(22, now + 0.22);
                 const g = ctx.createGain();
                 g.gain.setValueAtTime(0.001, now);
-                g.gain.linearRampToValueAtTime(2.2, now + 0.003);
-                g.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
+                g.gain.linearRampToValueAtTime(3.5, now + 0.002);
+                g.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
                 o.connect(g); g.connect(ctx.destination);
-                o.start(now); o.stop(now + 0.5);
+                o.start(now); o.stop(now + 0.25);
             })();
             // 5 — Realistic stone block impacts
             // Layer A: hard white-noise transient (stone surface contact, 8ms)
