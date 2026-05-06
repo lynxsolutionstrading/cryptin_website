@@ -171,12 +171,86 @@
     setTimeout(syncIntroLogoPos, 50);
     setTimeout(syncIntroLogoPos, 250);
 
+    /* ---------- Wall collapse sound (Web Audio API) ---------- */
+    function playWallCollapseSound() {
+        try {
+            const AC = window.AudioContext || window.webkitAudioContext;
+            if (!AC) return;
+            const ctx = new AC();
+            const now = ctx.currentTime;
+
+            // Brown noise generator (warm, deep rumble character)
+            function brownNoiseBuf(dur) {
+                const len = Math.ceil(ctx.sampleRate * dur);
+                const buf = ctx.createBuffer(1, len, ctx.sampleRate);
+                const d = buf.getChannelData(0);
+                let b0=0,b1=0,b2=0,b3=0,b4=0,b5=0,b6=0;
+                for (let i = 0; i < len; i++) {
+                    const w = Math.random() * 2 - 1;
+                    b0 = 0.99886*b0 + w*0.0555179; b1 = 0.99332*b1 + w*0.0750759;
+                    b2 = 0.96900*b2 + w*0.1538520; b3 = 0.86650*b3 + w*0.3104856;
+                    b4 = 0.55000*b4 + w*0.5329522; b5 = -0.7616*b5 - w*0.0168980;
+                    d[i] = (b0+b1+b2+b3+b4+b5+b6+w*0.5362) * 0.11;
+                    b6 = w * 0.115926;
+                }
+                return buf;
+            }
+            function whiteBuf(dur) {
+                const len = Math.ceil(ctx.sampleRate * dur);
+                const buf = ctx.createBuffer(1, len, ctx.sampleRate);
+                const d = buf.getChannelData(0);
+                for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+                return buf;
+            }
+            function play(buf, t, dur, freqLo, freqHi, peakGain, endGain) {
+                const src = ctx.createBufferSource(); src.buffer = buf;
+                const lp = ctx.createBiquadFilter(); lp.type = 'lowpass';  lp.frequency.value = freqHi;
+                const hp = ctx.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = freqLo;
+                const g  = ctx.createGain();
+                g.gain.setValueAtTime(0.001, t);
+                g.gain.linearRampToValueAtTime(peakGain, t + 0.012);
+                g.gain.exponentialRampToValueAtTime(Math.max(endGain, 0.0001), t + dur);
+                src.connect(lp); lp.connect(hp); hp.connect(g); g.connect(ctx.destination);
+                src.start(t); src.stop(t + dur + 0.05);
+            }
+
+            const bn  = brownNoiseBuf(3.0);
+            const wn  = whiteBuf(3.0);
+
+            // 1 — Initial crack (sharp transient)
+            play(wn,  now,        0.10,  600, 9000, 1.0,  0.001);
+            // 2 — Sub-bass impact pulse
+            play(bn,  now + 0.01, 0.55,   20,  180, 0.9,  0.001);
+            // 3 — Deep stone rumble
+            play(bn,  now + 0.03, 2.20,   40,  320, 0.75, 0.001);
+            play(bn,  now + 0.08, 1.80,   80,  550, 0.55, 0.001);
+            // 4 — Mid crumble layer
+            play(bn,  now + 0.05, 1.60,  200,  900, 0.40, 0.001);
+            // 5 — Individual stone impacts (randomised cascade)
+            for (let i = 0; i < 22; i++) {
+                const t  = now + 0.04 + Math.random() * 1.6;
+                const lo = 70  + Math.random() * 250;
+                const hi = lo  + 150 + Math.random() * 500;
+                const gv = 0.12 + Math.random() * 0.38;
+                const dv = 0.03 + Math.random() * 0.14;
+                play(brownNoiseBuf(dv + 0.06), t, dv, lo, hi, gv, 0.001);
+            }
+            // 6 — Dust / high-freq hiss (fades away)
+            play(wn,  now + 0.08, 2.20, 2500, 11000, 0.18, 0.001);
+
+            setTimeout(() => ctx.close().catch(()=>{}), 4000);
+        } catch(e) { /* AudioContext unavailable — silent fail */ }
+    }
+
     /* ---------- Click handler: instant wall break ---------- */
     let triggered = false;
     enter.addEventListener('click', () => {
         if (triggered) return;
         triggered = true;
         enter.style.pointerEvents = 'none';
+
+        // Fire wall collapse sound immediately on click
+        playWallCollapseSound();
 
         const tl = gsap.timeline({ onComplete: () => wall.remove() });
 
