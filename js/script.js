@@ -228,43 +228,46 @@
             // 4b — Mid crumble layer (disabled)
             // play(bn,  now + 0.05, 1.60,  200,  900, 0.40, 0.001);
             // 5 — Realistic stone block impacts
-            // Each impact = decaying triangle oscillator (the "klonk" resonance)
-            // + short noise burst (surface contact texture)
+            // Stone = short brown-noise thud (no sustained tone, no pitch sweep)
+            // + tiny sine click for physical definition at the moment of impact
             function stoneImpact(t, freq, gain, dur) {
-                // Tonal body: triangle wave, pitch falls fast (stone settles)
-                const osc = ctx.createOscillator();
-                osc.type = 'triangle';
-                osc.frequency.setValueAtTime(freq, t);
-                osc.frequency.exponentialRampToValueAtTime(freq * 0.35, t + dur * 0.4);
-
-                const oscGain = ctx.createGain();
-                oscGain.gain.setValueAtTime(0.001, t);
-                oscGain.gain.linearRampToValueAtTime(gain * 0.7, t + 0.004);
-                oscGain.gain.exponentialRampToValueAtTime(0.001, t + dur);
-
-                // Noise texture: very short bandpass burst at impact
-                const blen = Math.ceil(ctx.sampleRate * (dur + 0.05));
+                // Brown noise body — the main dull thud
+                const blen = Math.ceil(ctx.sampleRate * (dur + 0.06));
                 const nbuf = ctx.createBuffer(1, blen, ctx.sampleRate);
                 const nd   = nbuf.getChannelData(0);
-                for (let j = 0; j < blen; j++) nd[j] = Math.random() * 2 - 1;
+                let b0=0,b1=0,b2=0,b3=0,b4=0,b5=0,b6=0;
+                for (let j = 0; j < blen; j++) {
+                    const w = Math.random() * 2 - 1;
+                    b0=0.99886*b0+w*0.0555179; b1=0.99332*b1+w*0.0750759;
+                    b2=0.96900*b2+w*0.1538520; b3=0.86650*b3+w*0.3104856;
+                    b4=0.55000*b4+w*0.5329522; b5=-0.7616*b5-w*0.0168980;
+                    nd[j] = (b0+b1+b2+b3+b4+b5+b6+w*0.5362)*0.11; b6=w*0.115926;
+                }
                 const nsrc = ctx.createBufferSource(); nsrc.buffer = nbuf;
-                const nbp  = ctx.createBiquadFilter();
-                nbp.type = 'bandpass'; nbp.frequency.value = freq * 2.2; nbp.Q.value = 0.6;
-                const ngain = ctx.createGain();
-                ngain.gain.setValueAtTime(gain * 0.45, t);
-                ngain.gain.exponentialRampToValueAtTime(0.001, t + dur * 0.25);
+                const lp   = ctx.createBiquadFilter(); lp.type='lowpass';  lp.frequency.value = freq * 2.2;
+                const hp   = ctx.createBiquadFilter(); hp.type='highpass'; hp.frequency.value = freq * 0.4;
+                const ng   = ctx.createGain();
+                ng.gain.setValueAtTime(0.001, t);
+                ng.gain.linearRampToValueAtTime(gain, t + 0.003); // instant attack
+                ng.gain.exponentialRampToValueAtTime(0.001, t + dur); // dead fast decay
+                nsrc.connect(lp); lp.connect(hp); hp.connect(ng); ng.connect(ctx.destination);
+                nsrc.start(t); nsrc.stop(t + dur + 0.06);
 
-                osc.connect(oscGain);   oscGain.connect(ctx.destination);
-                nsrc.connect(nbp); nbp.connect(ngain); ngain.connect(ctx.destination);
-                osc.start(t); osc.stop(t + dur + 0.05);
-                nsrc.start(t); nsrc.stop(t + dur + 0.05);
+                // Tiny sine click — physical "contact" definition, very short
+                const osc = ctx.createOscillator(); osc.type = 'sine';
+                osc.frequency.value = freq;
+                const og = ctx.createGain();
+                og.gain.setValueAtTime(gain * 0.25, t);
+                og.gain.exponentialRampToValueAtTime(0.001, t + 0.030);
+                osc.connect(og); og.connect(ctx.destination);
+                osc.start(t); osc.stop(t + 0.035);
             }
 
             for (let i = 0; i < 22; i++) {
                 const t    = now + 0.02 + Math.random() * 1.8;
-                const freq = 80 + Math.random() * 160;   // 80–240 Hz (heavy stone range)
+                const freq = 55 + Math.random() * 120;   // 55–175 Hz — heavy stone
                 const gain = 0.20 + Math.random() * 0.20;
-                const dur  = 0.18 + Math.random() * 0.28; // 0.18–0.46s
+                const dur  = 0.06 + Math.random() * 0.10; // 0.06–0.16s — stone is dead, short
                 stoneImpact(t, freq, gain, dur);
             }
             // 6 — Dust / high-freq hiss (disabled)
