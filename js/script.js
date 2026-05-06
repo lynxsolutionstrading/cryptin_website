@@ -399,9 +399,10 @@
         }, 1.85);
     });
 
-    // Falling coin: click anywhere on wall (not on buttons) spawns a coin
+    // Falling coin: click anywhere on wall (not on buttons, not during mini-game)
     wall.addEventListener('click', (e) => {
         if (triggered) return;
+        if (window._mgActive) return;
         if (e.target.closest('button')) return;
 
         const size   = 52;
