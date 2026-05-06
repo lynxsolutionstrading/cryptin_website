@@ -184,7 +184,7 @@ textarea,
     animation: heroLogoFloat 5s ease-in-out infinite;
     /* Fallback position — centred, ~15 % from top (matches hero section + -400px offset) */
     left: 50%;
-    top: 15%;
+    top: 18%;
     transform: translate(-50%, -50%);
     width: min(520px, 55vw);
 }
@@ -193,7 +193,7 @@ textarea,
 /* ENTER + Mini-Game group — handles shared absolute positioning */
 .intro-btn-group {
     position: absolute;
-    bottom: calc(9vh + 245px);
+    bottom: calc(9vh + 195px);
     left: 50%;
     transform: translateX(-50%);
     display: flex;
@@ -784,7 +784,7 @@ input { font-family: inherit; }
     z-index: 5;
     text-align: center;
     padding: 2rem;
-    margin-top: -400px; /* shift logo 400px upward — intro logo follows via JS sync */
+    margin-top: -350px; /* shift logo 350px upward — intro logo follows via JS sync */
 }
 
 .hero-logo {
@@ -2800,7 +2800,7 @@ input { font-family: inherit; }
     }
 
     .intro-btn-group {
-        bottom: calc(9vh + 145px);
+        bottom: calc(9vh + 95px);
     }
 
     /* Cards flow freely as direct grid items of .layout so we can reorder them */
