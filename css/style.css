@@ -193,7 +193,7 @@ textarea,
 /* ENTER + Mini-Game group — handles shared absolute positioning */
 .intro-btn-group {
     position: absolute;
-    bottom: calc(9vh - 5px);
+    bottom: calc(9vh + 245px);
     left: 50%;
     transform: translateX(-50%);
     display: flex;
@@ -2800,7 +2800,7 @@ input { font-family: inherit; }
     }
 
     .intro-btn-group {
-        bottom: calc(9vh - 105px);
+        bottom: calc(9vh + 145px);
     }
 
     /* Cards flow freely as direct grid items of .layout so we can reorder them */
