@@ -191,10 +191,10 @@
                 o.start(t); o.stop(t + dur + 0.05);
             }
 
-            // — Kurzer Münzklang: 3 inharmonische Partials, nicht zu hell
-            tone(2100, now, 0.55, 0.85, 0.7);
-            tone(3500, now, 0.40, 0.45, 0.5);
-            tone(5100, now, 0.28, 0.15, 0.3);
+            // — Kleiner Münzklang: kurze Abklingzeit, dezente Lautstärke
+            tone(2100, now, 0.18, 0.45, 0.5);
+            tone(3500, now, 0.12, 0.22, 0.4);
+            tone(5100, now, 0.08, 0.08, 0.3);
 
             setTimeout(() => ctx.close().catch(() => {}), 3000);
         } catch(e) {}
