@@ -191,10 +191,10 @@
                 o.start(t); o.stop(t + dur + 0.05);
             }
 
-            // — Kleiner Münzklang: kurze Abklingzeit, dezente Lautstärke
-            tone(2100, now, 0.18, 0.45, 0.5);
-            tone(3500, now, 0.12, 0.22, 0.4);
-            tone(5100, now, 0.08, 0.08, 0.3);
+            // — Kleiner Münzklang: heller + 50% leiser
+            tone(2800, now, 0.18, 0.22, 0.5);
+            tone(4600, now, 0.12, 0.11, 0.4);
+            tone(6800, now, 0.08, 0.04, 0.3);
 
             setTimeout(() => ctx.close().catch(() => {}), 3000);
         } catch(e) {}
