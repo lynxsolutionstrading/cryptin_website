@@ -171,7 +171,7 @@
     setTimeout(syncIntroLogoPos, 50);
     setTimeout(syncIntroLogoPos, 250);
 
-    /* ---------- Coin drop sound — pure tones only, no noise ---------- */
+    /* ---------- Coin drop sound — FM synthesis (metallic character) ---------- */
     function playCoinSound() {
         try {
             const AC = window.AudioContext || window.webkitAudioContext;
@@ -179,24 +179,42 @@
             const ctx = new AC();
             const now = ctx.currentTime;
 
-            // Helper: pure sine with ADSR envelope
-            function tone(freq, t, dur, peak, atkMs) {
-                const o = ctx.createOscillator(); o.type = 'sine';
-                o.frequency.value = freq;
-                const g = ctx.createGain();
-                g.gain.setValueAtTime(0.001, t);
-                g.gain.linearRampToValueAtTime(peak, t + atkMs * 0.001);
-                g.gain.exponentialRampToValueAtTime(0.001, t + dur);
-                o.connect(g); g.connect(ctx.destination);
-                o.start(t); o.stop(t + dur + 0.05);
+            // FM voice: carrier + inharmonic modulator
+            // High mod-index at start = metallic "ting", decays to dull thud
+            function fmCoin(carrierHz, modRatio, modIdx, gain, dur) {
+                const carrier = ctx.createOscillator(); carrier.type = 'sine';
+                carrier.frequency.value = carrierHz;
+
+                const mod = ctx.createOscillator(); mod.type = 'sine';
+                mod.frequency.value = carrierHz * modRatio;
+
+                // Mod index envelope: bright metallic attack → fades out fast
+                const modG = ctx.createGain();
+                modG.gain.setValueAtTime(carrierHz * modIdx, now);
+                modG.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
+
+                // Low-pass to keep it dumpf
+                const lp = ctx.createBiquadFilter();
+                lp.type = 'lowpass'; lp.frequency.value = 1800;
+
+                // Output envelope
+                const outG = ctx.createGain();
+                outG.gain.setValueAtTime(0.001, now);
+                outG.gain.linearRampToValueAtTime(gain, now + 0.002);
+                outG.gain.exponentialRampToValueAtTime(0.001, now + dur);
+
+                mod.connect(modG); modG.connect(carrier.frequency);
+                carrier.connect(lp); lp.connect(outG); outG.connect(ctx.destination);
+
+                carrier.start(now); carrier.stop(now + dur + 0.05);
+                mod.start(now);     mod.stop(now + dur + 0.05);
             }
 
-            // — Münze auf Tisch: maximal dumpf
-            tone( 200, now, 0.40, 0.40, 0.5);
-            tone( 400, now, 0.28, 0.14, 0.4);
-            tone( 680, now, 0.18, 0.03, 0.3);
+            // Two FM voices — main hit + softer upper partial
+            fmCoin(700, 1.414, 3.5, 0.40, 0.45);   // √2 ratio = inharmonic/metallic
+            fmCoin(1100, 1.732, 2.0, 0.18, 0.30);  // √3 ratio, softer
 
-            setTimeout(() => ctx.close().catch(() => {}), 3000);
+            setTimeout(() => ctx.close().catch(() => {}), 2000);
         } catch(e) {}
     }
 
