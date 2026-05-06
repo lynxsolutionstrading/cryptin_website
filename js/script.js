@@ -221,12 +221,13 @@
             // play(wn,  now,        0.06,  300, 2000, 0.08, 0.001);
             // 2 — Sub-bass impact pulse (disabled — sounds like gong)
             // play(bn,  now + 0.01, 0.55,   20,  180, 0.9,  0.001);
-            // 3 — Deep stone rumble (disabled — gong-like)
+            // 3 — Deep stone rumble (disabled)
             // play(bn,  now + 0.03, 2.20,   40,  320, 0.75, 0.001);
-            play(bn,  now + 0.08, 1.80,   80,  550, 0.55, 0.001);
-            // 4 — Mid crumble layer
-            play(bn,  now + 0.05, 1.60,  200,  900, 0.40, 0.001);
-            // 5 — Individual stone impacts (randomised cascade)
+            // 4a — Second rumble layer (disabled)
+            // play(bn,  now + 0.08, 1.80,   80,  550, 0.55, 0.001);
+            // 4b — Mid crumble layer (disabled)
+            // play(bn,  now + 0.05, 1.60,  200,  900, 0.40, 0.001);
+            // 5 — Individual stone impacts
             for (let i = 0; i < 22; i++) {
                 const t  = now + 0.04 + Math.random() * 1.6;
                 const lo = 70  + Math.random() * 250;
@@ -235,8 +236,8 @@
                 const dv = 0.03 + Math.random() * 0.14;
                 play(brownNoiseBuf(dv + 0.06), t, dv, lo, hi, gv, 0.001);
             }
-            // 6 — Dust / high-freq hiss (fades away)
-            play(wn,  now + 0.08, 2.20, 2500, 11000, 0.027, 0.001);
+            // 6 — Dust / high-freq hiss (disabled)
+            // play(wn,  now + 0.08, 2.20, 2500, 11000, 0.027, 0.001);
 
             setTimeout(() => ctx.close().catch(()=>{}), 4000);
         } catch(e) { /* AudioContext unavailable — silent fail */ }
