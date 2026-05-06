@@ -191,10 +191,10 @@
                 o.start(t); o.stop(t + dur + 0.05);
             }
 
-            // — Münze auf Tisch: dumpf/metallisch, tiefere Frequenzen
-            tone(1100, now, 1.10, 0.32, 0.5);   // Grundton — tief, dumpf
-            tone(1900, now, 0.70, 0.16, 0.4);   // 2. Partial
-            tone(3000, now, 0.40, 0.05, 0.3);   // 3. Partial — sehr leise
+            // — Münze auf Tisch: noch dumpfer
+            tone( 650, now, 1.00, 0.35, 0.5);
+            tone(1200, now, 0.65, 0.16, 0.4);
+            tone(1900, now, 0.38, 0.05, 0.3);
 
             setTimeout(() => ctx.close().catch(() => {}), 3000);
         } catch(e) {}
