@@ -228,46 +228,52 @@
             // 4b — Mid crumble layer (disabled)
             // play(bn,  now + 0.05, 1.60,  200,  900, 0.40, 0.001);
             // 5 — Realistic stone block impacts
-            // Stone = short brown-noise thud (no sustained tone, no pitch sweep)
-            // + tiny sine click for physical definition at the moment of impact
-            function stoneImpact(t, freq, gain, dur) {
-                // Brown noise body — the main dull thud
-                const blen = Math.ceil(ctx.sampleRate * (dur + 0.06));
-                const nbuf = ctx.createBuffer(1, blen, ctx.sampleRate);
-                const nd   = nbuf.getChannelData(0);
+            // Layer A: hard white-noise transient (stone surface contact, 8ms)
+            // Layer B: sub-bass brown-noise body (mass/weight of the block, ~150ms)
+            function mkBrown(dur) {
+                const len = Math.ceil(ctx.sampleRate * dur);
+                const buf = ctx.createBuffer(1, len, ctx.sampleRate);
+                const d   = buf.getChannelData(0);
                 let b0=0,b1=0,b2=0,b3=0,b4=0,b5=0,b6=0;
-                for (let j = 0; j < blen; j++) {
-                    const w = Math.random() * 2 - 1;
-                    b0=0.99886*b0+w*0.0555179; b1=0.99332*b1+w*0.0750759;
-                    b2=0.96900*b2+w*0.1538520; b3=0.86650*b3+w*0.3104856;
-                    b4=0.55000*b4+w*0.5329522; b5=-0.7616*b5-w*0.0168980;
-                    nd[j] = (b0+b1+b2+b3+b4+b5+b6+w*0.5362)*0.11; b6=w*0.115926;
-                }
-                const nsrc = ctx.createBufferSource(); nsrc.buffer = nbuf;
-                const lp   = ctx.createBiquadFilter(); lp.type='lowpass';  lp.frequency.value = freq * 2.2;
-                const hp   = ctx.createBiquadFilter(); hp.type='highpass'; hp.frequency.value = freq * 0.4;
-                const ng   = ctx.createGain();
-                ng.gain.setValueAtTime(0.001, t);
-                ng.gain.linearRampToValueAtTime(gain, t + 0.003); // instant attack
-                ng.gain.exponentialRampToValueAtTime(0.001, t + dur); // dead fast decay
-                nsrc.connect(lp); lp.connect(hp); hp.connect(ng); ng.connect(ctx.destination);
-                nsrc.start(t); nsrc.stop(t + dur + 0.06);
+                for (let j=0;j<len;j++){const w=Math.random()*2-1;b0=0.99886*b0+w*0.0555179;b1=0.99332*b1+w*0.0750759;b2=0.96900*b2+w*0.1538520;b3=0.86650*b3+w*0.3104856;b4=0.55000*b4+w*0.5329522;b5=-0.7616*b5-w*0.0168980;d[j]=(b0+b1+b2+b3+b4+b5+b6+w*0.5362)*0.11;b6=w*0.115926;}
+                return buf;
+            }
+            function mkWhite(dur) {
+                const len = Math.ceil(ctx.sampleRate * dur);
+                const buf = ctx.createBuffer(1, len, ctx.sampleRate);
+                const d   = buf.getChannelData(0);
+                for (let j=0;j<len;j++) d[j]=Math.random()*2-1;
+                return buf;
+            }
 
-                // Tiny sine click — physical "contact" definition, very short
-                const osc = ctx.createOscillator(); osc.type = 'sine';
-                osc.frequency.value = freq;
-                const og = ctx.createGain();
-                og.gain.setValueAtTime(gain * 0.25, t);
-                og.gain.exponentialRampToValueAtTime(0.001, t + 0.030);
-                osc.connect(og); og.connect(ctx.destination);
-                osc.start(t); osc.stop(t + 0.035);
+            function stoneImpact(t, freq, gain, dur) {
+                // A — Hard transient: white noise, filtered 300–2500 Hz, 8 ms
+                const ws = ctx.createBufferSource(); ws.buffer = mkWhite(0.02);
+                const wlp = ctx.createBiquadFilter(); wlp.type='lowpass';  wlp.frequency.value=2500;
+                const whp = ctx.createBiquadFilter(); whp.type='highpass'; whp.frequency.value=300;
+                const wg  = ctx.createGain();
+                wg.gain.setValueAtTime(gain * 1.5, t);
+                wg.gain.exponentialRampToValueAtTime(0.001, t + 0.008);
+                ws.connect(wlp); wlp.connect(whp); whp.connect(wg); wg.connect(ctx.destination);
+                ws.start(t); ws.stop(t + 0.025);
+
+                // B — Sub-bass body: brown noise, filtered 40–200 Hz, slower decay
+                const bs  = ctx.createBufferSource(); bs.buffer = mkBrown(dur + 0.05);
+                const blp = ctx.createBiquadFilter(); blp.type='lowpass';  blp.frequency.value=freq*2.5;
+                const bhp = ctx.createBiquadFilter(); bhp.type='highpass'; bhp.frequency.value=freq*0.35;
+                const bg  = ctx.createGain();
+                bg.gain.setValueAtTime(0.001, t);
+                bg.gain.linearRampToValueAtTime(gain * 0.9, t + 0.004);
+                bg.gain.exponentialRampToValueAtTime(0.001, t + dur);
+                bs.connect(blp); blp.connect(bhp); bhp.connect(bg); bg.connect(ctx.destination);
+                bs.start(t); bs.stop(t + dur + 0.06);
             }
 
             for (let i = 0; i < 22; i++) {
                 const t    = now + 0.02 + Math.random() * 1.8;
-                const freq = 55 + Math.random() * 120;   // 55–175 Hz — heavy stone
+                const freq = 45 + Math.random() * 90;    // 45–135 Hz — very heavy
                 const gain = 0.20 + Math.random() * 0.20;
-                const dur  = 0.06 + Math.random() * 0.10; // 0.06–0.16s — stone is dead, short
+                const dur  = 0.10 + Math.random() * 0.14; // 0.10–0.24s
                 stoneImpact(t, freq, gain, dur);
             }
             // 6 — Dust / high-freq hiss (disabled)
