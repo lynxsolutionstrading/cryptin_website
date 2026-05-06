@@ -171,7 +171,7 @@
     setTimeout(syncIntroLogoPos, 50);
     setTimeout(syncIntroLogoPos, 250);
 
-    /* ---------- Coin drop sound (Web Audio API) ---------- */
+    /* ---------- Coin drop sound — pure tones only, no noise ---------- */
     function playCoinSound() {
         try {
             const AC = window.AudioContext || window.webkitAudioContext;
@@ -179,32 +179,38 @@
             const ctx = new AC();
             const now = ctx.currentTime;
 
-            // Metallic impact click (white noise burst, high-pass 5kHz, 6ms)
-            const clickLen = Math.ceil(ctx.sampleRate * 0.006);
-            const clickBuf = ctx.createBuffer(1, clickLen, ctx.sampleRate);
-            const cd = clickBuf.getChannelData(0);
-            for (let i = 0; i < clickLen; i++) cd[i] = Math.random() * 2 - 1;
-            const cs = ctx.createBufferSource(); cs.buffer = clickBuf;
-            const chp = ctx.createBiquadFilter(); chp.type = 'highpass'; chp.frequency.value = 5000;
-            const cg = ctx.createGain();
-            cg.gain.setValueAtTime(0.5, now);
-            cg.gain.exponentialRampToValueAtTime(0.001, now + 0.006);
-            cs.connect(chp); chp.connect(cg); cg.connect(ctx.destination);
-            cs.start(now); cs.stop(now + 0.01);
-
-            // Coin ring — 3 inharmonic sine partials (metallic character)
-            [[4200, 0.8, 0.85], [6800, 0.4, 0.60], [9600, 0.18, 0.38]].forEach(([freq, gain, dur]) => {
+            // Helper: pure sine with ADSR envelope
+            function tone(freq, t, dur, peak, atkMs) {
                 const o = ctx.createOscillator(); o.type = 'sine';
                 o.frequency.value = freq;
                 const g = ctx.createGain();
-                g.gain.setValueAtTime(0.001, now);
-                g.gain.linearRampToValueAtTime(gain, now + 0.001);
-                g.gain.exponentialRampToValueAtTime(0.001, now + dur);
+                g.gain.setValueAtTime(0.001, t);
+                g.gain.linearRampToValueAtTime(peak, t + atkMs * 0.001);
+                g.gain.exponentialRampToValueAtTime(0.001, t + dur);
                 o.connect(g); g.connect(ctx.destination);
-                o.start(now); o.stop(now + dur + 0.05);
+                o.start(t); o.stop(t + dur + 0.05);
+            }
+
+            // — Main impact: 3 inharmonic metallic partials
+            tone(4200, now,        0.85, 0.90, 0.8);
+            tone(6800, now,        0.60, 0.45, 0.7);
+            tone(9600, now,        0.38, 0.20, 0.5);
+
+            // — First bounce (0.36s later, softer)
+            tone(4200, now + 0.36, 0.32, 0.48, 0.7);
+            tone(6800, now + 0.36, 0.22, 0.22, 0.5);
+            tone(9600, now + 0.36, 0.14, 0.10, 0.3);
+
+            // — Second tiny bounce (0.56s)
+            tone(4200, now + 0.56, 0.16, 0.20, 0.5);
+            tone(6800, now + 0.56, 0.10, 0.09, 0.3);
+
+            // — Dust: cluster of closely-spaced sines — beating creates soft shimmer
+            [195, 218, 247, 281, 328, 386].forEach((f, i) => {
+                tone(f, now + 0.70 + i * 0.016, 0.55, 0.032, 22);
             });
 
-            setTimeout(() => ctx.close().catch(() => {}), 2000);
+            setTimeout(() => ctx.close().catch(() => {}), 3000);
         } catch(e) {}
     }
 
@@ -340,8 +346,7 @@
         triggered = true;
         enter.style.pointerEvents = 'none';
 
-        // Fire sounds immediately on click
-        playCoinSound();
+        // Fire wall collapse sound immediately on click
         playWallCollapseSound();
 
         const tl = gsap.timeline({ onComplete: () => wall.remove() });
@@ -388,6 +393,56 @@
             document.body.classList.remove('intro-locked');
             document.documentElement.classList.remove('intro-locked');
         }, 1.85);
+    });
+
+    // Falling coin: click anywhere on wall (not on buttons) spawns a coin
+    wall.addEventListener('click', (e) => {
+        if (triggered) return;
+        if (e.target.closest('button')) return;
+
+        const size   = 52;
+        const coin   = document.createElement('img');
+        coin.src     = 'Graphics/cryptin_coin_logo.png';
+        const landY  = e.clientY - size / 2;
+        const fallDur = 0.32 + (e.clientY / window.innerHeight) * 0.42; // faster top, slower bottom
+
+        Object.assign(coin.style, {
+            position:      'fixed',
+            width:         size + 'px',
+            height:        size + 'px',
+            top:           -(size + 10) + 'px',
+            left:          (e.clientX - size / 2) + 'px',
+            pointerEvents: 'none',
+            zIndex:        '9997',
+            borderRadius:  '50%',
+        });
+        document.body.appendChild(coin);
+
+        // Coin spin: scaleX oscillation simulates the coin rotating edge-on
+        gsap.to(coin, {
+            scaleX: -1,
+            duration: fallDur / 6,
+            repeat: -1,
+            yoyo: true,
+            ease: 'none',
+        });
+
+        // Fall with gravity (ease-in), then bounce + fade on landing
+        gsap.to(coin, {
+            top:      landY,
+            duration: fallDur,
+            ease:     'power2.in',
+            onComplete() {
+                playCoinSound();
+                gsap.killTweensOf(coin); // stop spin
+                gsap.timeline()
+                    .to(coin, { top: landY - 14, scaleX: 1, duration: 0.09, ease: 'power1.out' })
+                    .to(coin, { top: landY,      duration: 0.08, ease: 'power1.in' })
+                    .to(coin, { top: landY -  6, duration: 0.06, ease: 'power1.out' })
+                    .to(coin, { top: landY,      duration: 0.06, ease: 'power1.in' })
+                    .to(coin, { opacity: 0,      duration: 0.40, delay: 0.25, onComplete: () => coin.remove() });
+            },
+        });
     });
 
     // Prevent browser from dragging the background image or logo when the user drags
