@@ -263,7 +263,7 @@
             for (let i = 0; i < 22; i++) {
                 const t    = now + 0.02 + Math.random() * 1.8;
                 const freq = 80 + Math.random() * 160;   // 80–240 Hz (heavy stone range)
-                const gain = 0.55 + Math.random() * 0.55;
+                const gain = 0.20 + Math.random() * 0.20;
                 const dur  = 0.18 + Math.random() * 0.28; // 0.18–0.46s
                 stoneImpact(t, freq, gain, dur);
             }
