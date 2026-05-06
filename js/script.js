@@ -191,10 +191,10 @@
                 o.start(t); o.stop(t + dur + 0.05);
             }
 
-            // — Kleiner Münzklang: heller + 50% leiser
-            tone(2800, now, 0.18, 0.22, 0.5);
-            tone(4600, now, 0.12, 0.11, 0.4);
-            tone(6800, now, 0.08, 0.04, 0.3);
+            // — Münze auf Tisch: harter Anschlag, langes Nachklingen
+            tone(2500, now, 1.30, 0.28, 0.5);   // Grundton — langer Ausklang
+            tone(4100, now, 0.85, 0.14, 0.4);   // 2. Partial
+            tone(6400, now, 0.50, 0.06, 0.3);   // 3. Partial — klingt schneller ab
 
             setTimeout(() => ctx.close().catch(() => {}), 3000);
         } catch(e) {}
