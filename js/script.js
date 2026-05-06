@@ -272,7 +272,7 @@
             for (let i = 0; i < 22; i++) {
                 const t    = now + 0.02 + Math.random() * 1.8;
                 const freq = 35 + Math.random() * 75;    // 35–110 Hz — deeper/dumpfer
-                const gain = 0.40 + Math.random() * 0.40; // +30% louder
+                const gain = 0.80 + Math.random() * 0.80; // +100% louder
                 const dur  = 0.18 + Math.random() * 0.18; // 0.18–0.36s — longer
                 stoneImpact(t, freq, gain, dur);
             }
