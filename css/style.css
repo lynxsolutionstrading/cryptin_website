@@ -492,7 +492,7 @@ input { font-family: inherit; }
     position: relative;
     z-index: 0;            /* establishes stacking context — keeps internal z-indices trapped */
     width: 100%;
-    aspect-ratio: 16 / 9;  /* matches the source video exactly */
+    aspect-ratio: 20 / 9;  /* 16:9 × 80% height = 20:9 */
     min-height: 420px;     /* never collapse too far on very wide / short viewports */
     overflow: hidden;
     display: grid;
@@ -2779,7 +2779,7 @@ input { font-family: inherit; }
     .col-right { order: 3; display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; flex-direction: initial; }
     .col-left .card,
     .col-right .card { flex: initial; }
-    .hero { aspect-ratio: 16 / 9; min-height: 360px; }
+    .hero { aspect-ratio: 20 / 9; min-height: 360px; }
 }
 
 /* Mobile-large + small tablet portrait â€” minimal header (just lang) */
@@ -2859,7 +2859,7 @@ input { font-family: inherit; }
     .lang-flag { font-size: 0.9rem; }
 
     /* Hero â€” shorter so it doesn't dominate */
-    .hero { aspect-ratio: 16 / 9; min-height: 300px; }
+    .hero { aspect-ratio: 20 / 9; min-height: 300px; }
 
     /* Sidebars stack to single column */
     .col-left, .col-right { grid-template-columns: 1fr; gap: 1.2rem; }
@@ -2897,7 +2897,7 @@ input { font-family: inherit; }
 @media (max-width: 480px) {
     .layout { padding: 0 0.7rem; gap: 0.9rem; }
 
-    .hero { aspect-ratio: 16 / 9; min-height: 240px; }
+    .hero { aspect-ratio: 20 / 9; min-height: 240px; }
     .hero-logo { width: clamp(220px, 75vw, 360px); }
 
     /* Nav: single combined row of 6 small links */
@@ -2975,7 +2975,7 @@ input { font-family: inherit; }
 
 /* Tiny mobile (â‰¤360px) â€” last-resort tightening */
 @media (max-width: 360px) {
-    .hero { aspect-ratio: 16 / 9; min-height: 200px; }
+    .hero { aspect-ratio: 20 / 9; min-height: 200px; }
     .nav-left ul, .nav-right ul { gap: 0.7rem; }
     .nav-left a, .nav-right a { font-size: 0.58rem; }
     .news-banner-content h2 { font-size: 1.05rem; }
