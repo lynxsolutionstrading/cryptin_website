@@ -227,14 +227,14 @@
             // play(bn,  now + 0.08, 1.80,   80,  550, 0.55, 0.001);
             // 4b — Mid crumble layer (disabled)
             // play(bn,  now + 0.05, 1.60,  200,  900, 0.40, 0.001);
-            // 5 — Individual stone impacts
+            // 5 — Heavy stone block impacts (loud, dull, low-freq thuds)
             for (let i = 0; i < 22; i++) {
-                const t  = now + 0.04 + Math.random() * 1.6;
-                const lo = 70  + Math.random() * 250;
-                const hi = lo  + 150 + Math.random() * 500;
-                const gv = 0.12 + Math.random() * 0.38;
-                const dv = 0.03 + Math.random() * 0.14;
-                play(brownNoiseBuf(dv + 0.06), t, dv, lo, hi, gv, 0.001);
+                const t  = now + 0.02 + Math.random() * 1.8;
+                const lo = 30  + Math.random() * 60;      // 30–90 Hz  (very deep)
+                const hi = lo  + 80  + Math.random() * 120; // ~110–270 Hz (dull thud, no brightness)
+                const gv = 0.5 + Math.random() * 0.5;     // 0.5–1.0  (loud)
+                const dv = 0.10 + Math.random() * 0.20;   // 0.10–0.30s (heavy block resonance)
+                play(brownNoiseBuf(dv + 0.1), t, dv, lo, hi, gv, 0.001);
             }
             // 6 — Dust / high-freq hiss (disabled)
             // play(wn,  now + 0.08, 2.20, 2500, 11000, 0.027, 0.001);
