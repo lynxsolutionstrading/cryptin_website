@@ -171,6 +171,43 @@
     setTimeout(syncIntroLogoPos, 50);
     setTimeout(syncIntroLogoPos, 250);
 
+    /* ---------- Coin drop sound (Web Audio API) ---------- */
+    function playCoinSound() {
+        try {
+            const AC = window.AudioContext || window.webkitAudioContext;
+            if (!AC) return;
+            const ctx = new AC();
+            const now = ctx.currentTime;
+
+            // Metallic impact click (white noise burst, high-pass 5kHz, 6ms)
+            const clickLen = Math.ceil(ctx.sampleRate * 0.006);
+            const clickBuf = ctx.createBuffer(1, clickLen, ctx.sampleRate);
+            const cd = clickBuf.getChannelData(0);
+            for (let i = 0; i < clickLen; i++) cd[i] = Math.random() * 2 - 1;
+            const cs = ctx.createBufferSource(); cs.buffer = clickBuf;
+            const chp = ctx.createBiquadFilter(); chp.type = 'highpass'; chp.frequency.value = 5000;
+            const cg = ctx.createGain();
+            cg.gain.setValueAtTime(0.5, now);
+            cg.gain.exponentialRampToValueAtTime(0.001, now + 0.006);
+            cs.connect(chp); chp.connect(cg); cg.connect(ctx.destination);
+            cs.start(now); cs.stop(now + 0.01);
+
+            // Coin ring — 3 inharmonic sine partials (metallic character)
+            [[4200, 0.8, 0.85], [6800, 0.4, 0.60], [9600, 0.18, 0.38]].forEach(([freq, gain, dur]) => {
+                const o = ctx.createOscillator(); o.type = 'sine';
+                o.frequency.value = freq;
+                const g = ctx.createGain();
+                g.gain.setValueAtTime(0.001, now);
+                g.gain.linearRampToValueAtTime(gain, now + 0.001);
+                g.gain.exponentialRampToValueAtTime(0.001, now + dur);
+                o.connect(g); g.connect(ctx.destination);
+                o.start(now); o.stop(now + dur + 0.05);
+            });
+
+            setTimeout(() => ctx.close().catch(() => {}), 2000);
+        } catch(e) {}
+    }
+
     /* ---------- Wall collapse sound (Web Audio API) ---------- */
     function playWallCollapseSound() {
         try {
@@ -303,7 +340,8 @@
         triggered = true;
         enter.style.pointerEvents = 'none';
 
-        // Fire wall collapse sound immediately on click
+        // Fire sounds immediately on click
+        playCoinSound();
         playWallCollapseSound();
 
         const tl = gsap.timeline({ onComplete: () => wall.remove() });
