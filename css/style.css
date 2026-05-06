@@ -2211,14 +2211,14 @@ input { font-family: inherit; }
    LIVE SERVER STRIP
 ==================================================================== */
 .live-strip {
-    width: 100%;
+    /* 100vw includes the scrollbar width — bar covers the full viewport edge */
+    width: 100vw;
     background: linear-gradient(90deg, rgba(4, 10, 16, 0.98), rgba(10, 20, 30, 0.98));
     border-top: 1px solid rgba(118, 74, 28, 0.28);
     position: fixed;
     bottom: 0;
     left: 0;
-    right: 0;
-    z-index: 500;
+    z-index: 9998;
     overflow: hidden;
 }
 
