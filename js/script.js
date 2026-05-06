@@ -195,7 +195,7 @@
 
                 // Low-pass to keep it dumpf
                 const lp = ctx.createBiquadFilter();
-                lp.type = 'lowpass'; lp.frequency.value = 1800;
+                lp.type = 'lowpass'; lp.frequency.value = 1100;
 
                 // Output envelope
                 const outG = ctx.createGain();
