@@ -249,8 +249,8 @@
             function stoneImpact(t, freq, gain, dur) {
                 // A — Hard transient: white noise, filtered 300–2500 Hz, 8 ms
                 const ws = ctx.createBufferSource(); ws.buffer = mkWhite(0.02);
-                const wlp = ctx.createBiquadFilter(); wlp.type='lowpass';  wlp.frequency.value=2500;
-                const whp = ctx.createBiquadFilter(); whp.type='highpass'; whp.frequency.value=300;
+                const wlp = ctx.createBiquadFilter(); wlp.type='lowpass';  wlp.frequency.value=900;
+                const whp = ctx.createBiquadFilter(); whp.type='highpass'; whp.frequency.value=150;
                 const wg  = ctx.createGain();
                 wg.gain.setValueAtTime(gain * 1.5, t);
                 wg.gain.exponentialRampToValueAtTime(0.001, t + 0.008);
@@ -271,8 +271,8 @@
 
             for (let i = 0; i < 22; i++) {
                 const t    = now + 0.02 + Math.random() * 1.8;
-                const freq = 45 + Math.random() * 90;    // 45–135 Hz — very heavy
-                const gain = 0.20 + Math.random() * 0.20;
+                const freq = 35 + Math.random() * 75;    // 35–110 Hz — deeper/dumpfer
+                const gain = 0.26 + Math.random() * 0.26; // +30% louder
                 const dur  = 0.10 + Math.random() * 0.14; // 0.10–0.24s
                 stoneImpact(t, freq, gain, dur);
             }
