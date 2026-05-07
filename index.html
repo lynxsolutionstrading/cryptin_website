@@ -3,27 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cryptin — Neuigkeiten</title>
+    <title>Cryptin — Das Crypto MMORPG</title>
     <link rel="icon" type="image/png" href="Graphics/cryptin_coin_logo.png">
     <link rel="preload" as="image" href="Graphics/cryptin_intro_wall.jpg" fetchpriority="high">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Inter:wght@400;500;600;700;800&family=Bebas+Neue&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
     <style>
-        /* Cursor override — path relative to HTML file, not CSS subfolder */
-        html, body, * { cursor: url("Graphics/cursor_game.png") 2 2, crosshair !important; }
-        input, textarea, [contenteditable] { cursor: text !important; }
         /* Intro wall starts invisible; JS fades it in after all resources are loaded */
         #intro-wall { opacity: 0; }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
     <script src="js/three.min.js"></script>
 </head>
 <body>
 
-    <!-- ===== PAGE LOADER — covers everything while resources load ===== -->
+    <!-- ===== CUSTOM CURSOR ===== -->
+    <div id="cursor-dot" aria-hidden="true"></div>
+
+    <!-- ===== PAGE LOADER ===== -->
     <div id="pageLoader" aria-hidden="true">
+        <img src="Graphics/Cryptin_with_Slogan.png" alt="Cryptin" class="loader-logo">
         <div class="loader-ring"></div>
     </div>
 
@@ -45,1243 +47,399 @@
                     <stop offset="100%" stop-color="rgba(0,0,0,0)"/>
                 </radialGradient>
             </defs>
-            <!-- Light burst that flashes when ENTER is hit -->
             <circle id="introBurstFx" cx="960" cy="540" r="0" fill="url(#introBurst)" opacity="0" pointer-events="none"/>
             <g class="chunks" id="introChunks"></g>
             <g class="cracks" id="introCracks"></g>
             <g class="dust" id="introDust"></g>
         </svg>
 
-        <!-- Logo overlay — positioned by JS to match the main page's .hero-logo
-             so it stays put while the stone behind it shatters away -->
         <img class="intro-logo" id="introLogo" src="Graphics/Cryptin_with_Slogan.png" alt="Cryptin">
 
-        <!-- ENTER button + Mini-Game link -->
         <div class="intro-btn-group">
             <button class="intro-enter" id="introEnter" type="button">ENTER</button>
             <button class="intro-minigame" id="introMiniGame" type="button">Start Mini-Game</button>
         </div>
     </div>
 
-    <!-- ===== HEADER ===== -->
-    <header class="header">
-        <div class="header-inner">
-            <nav class="nav-left">
-                <ul>
-                    <li><a href="#news">Neuigkeiten</a></li>
-                    <li><a href="#register">Registrieren</a></li>
-                    <li><a href="#download">Herunterladen</a></li>
-                </ul>
-            </nav>
+    <!-- ===== LIVE STRIP (hidden, kept for script.js compat) ===== -->
+    <div class="live-strip" style="display:none" aria-hidden="true"></div>
 
-            <a href="#" class="header-logo" aria-label="Cryptin">
-                <span class="header-logo-ring"></span>
-                <img src="Graphics/cryptin_coin_logo.png" alt="Cryptin">
+    <!-- ===== NAVIGATION ===== -->
+    <nav class="main-nav" id="mainNav">
+        <div class="nav-inner">
+            <a href="#" class="nav-logo" aria-label="Cryptin Home">
+                <img src="Graphics/cryptin_coin_logo.png" alt="Cryptin" height="36">
             </a>
 
-            <nav class="nav-right">
-                <ul>
-                    <li><a href="#ranking">Rangliste</a></li>
-                    <li><a href="#presentation">Presentation</a></li>
-                    <li><a href="#discord">Discord</a></li>
-                </ul>
-            </nav>
+            <ul class="nav-links" id="navLinks">
+                <li><a href="#about">Über das Spiel</a></li>
+                <li><a href="#ranking">Rangliste</a></li>
+                <li><a href="#news">News</a></li>
+                <li><a href="#download">Download</a></li>
+            </ul>
 
-            <div class="lang-select">
-                <button class="lang-btn">
-                    <span class="lang-flag">🇩🇪</span>
-                    <span>DE</span>
-                    <span class="lang-arrow">▾</span>
-                </button>
-                <ul class="lang-drop">
-                    <li><span class="lang-flag">🇩🇪</span> Deutsch</li>
-                    <li><span class="lang-flag">🇬🇧</span> English</li>
-                    <li><span class="lang-flag">🇹🇷</span> Türkçe</li>
-                    <li><span class="lang-flag">🇷🇴</span> Română</li>
-                    <li><span class="lang-flag">🇮🇹</span> Italiano</li>
-                    <li><span class="lang-flag">🇪🇸</span> Español</li>
-                    <li><span class="lang-flag">🇵🇱</span> Polski</li>
-                </ul>
+            <div class="nav-actions">
+                <button class="btn-login" id="btnLogin" type="button">Login</button>
+                <button class="btn-register" id="btnRegister" type="button">Registrieren</button>
             </div>
+
+            <button class="hamburger" id="hamburger" type="button" aria-label="Menü öffnen" aria-expanded="false">
+                <span></span><span></span><span></span>
+            </button>
         </div>
-    </header>
+    </nav>
 
-    <!-- ===== HERO BANNER ===== -->
-    <section class="hero">
-        <video class="hero-bg" autoplay loop muted playsinline poster="Graphics/cryptin_city_bg.png" preload="auto">
-            <source src="Graphics/cryptin_city_bg.mp4" type="video/mp4">
+    <!-- ===== MOBILE MENU OVERLAY ===== -->
+    <div class="mobile-menu" id="mobileMenu" aria-hidden="true">
+        <button class="mobile-menu-close" id="mobileClose" type="button" aria-label="Menü schließen">✕</button>
+        <ul>
+            <li><a href="#about" class="mobile-link">Über das Spiel</a></li>
+            <li><a href="#ranking" class="mobile-link">Rangliste</a></li>
+            <li><a href="#news" class="mobile-link">News</a></li>
+            <li><a href="#download" class="mobile-link">Download</a></li>
+        </ul>
+        <div class="mobile-actions">
+            <button class="btn-login" id="btnLoginMobile" type="button">Login</button>
+            <button class="btn-register" id="btnRegisterMobile" type="button">Registrieren</button>
+        </div>
+    </div>
+
+    <!-- ===== SECTION 1: HERO ===== -->
+    <section class="hero" id="hero">
+        <video class="hero-video" autoplay muted loop playsinline poster="Graphics/cryptin_city_bg_dark.png" preload="auto">
+            <source src="Graphics/cryptin_city_bg_sharp_strong.mp4" type="video/mp4">
         </video>
-
-        <!-- City lights mask animation kept in DOM but hidden — the video supplies its own motion -->
-        <svg class="city-lights" viewBox="0 0 3840 1648" preserveAspectRatio="xMidYMid slice" aria-hidden="true" style="display:none">
-            <defs>
-                <radialGradient id="lightMaskGrad" cx="0.5" cy="0.5" r="0.5">
-                    <stop offset="0%" stop-color="#fff" stop-opacity="1"/>
-                    <stop offset="55%" stop-color="#fff" stop-opacity="0.85"/>
-                    <stop offset="100%" stop-color="#fff" stop-opacity="0"/>
-                </radialGradient>
-                <mask id="lightsMask" maskUnits="userSpaceOnUse" x="0" y="0" width="3840" height="1648">
-                    <rect x="0" y="0" width="3840" height="1648" fill="#000"/>
-    <circle cx="1065" cy="845" r="60" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="3125" cy="715" r="60" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="3060" cy="850" r="60" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="2440" cy="730" r="60" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="2325" cy="1250" r="60" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="2930" cy="1020" r="60" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="1310" cy="810" r="60" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="2255" cy="1100" r="60" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="2335" cy="1135" r="60" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="1195" cy="665" r="60" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="2290" cy="455" r="60" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="2585" cy="1245" r="60" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="3055" cy="335" r="60" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="440" cy="760" r="60" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="1255" cy="1355" r="60" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="2905" cy="650" r="60" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="2765" cy="295" r="60" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="2445" cy="765" r="60" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="3065" cy="850" r="60" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="1710" cy="1345" r="60" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="2285" cy="795" r="60" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="1235" cy="805" r="60" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="2755" cy="720" r="60" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="2325" cy="1240" r="60" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="1790" cy="1220" r="60" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="2575" cy="925" r="60" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="2570" cy="665" r="60" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="2780" cy="1080" r="60" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="2895" cy="765" r="60" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="2320" cy="1620" r="60" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="2055" cy="685" r="42" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="3090" cy="680" r="42" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="1185" cy="1410" r="42" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="1865" cy="725" r="42" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="405" cy="1135" r="42" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="2345" cy="1130" r="42" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="2070" cy="1085" r="42" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="1480" cy="1100" r="42" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="2955" cy="795" r="42" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="2365" cy="590" r="42" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="2210" cy="1095" r="42" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="600" cy="1085" r="42" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="2425" cy="525" r="42" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="2335" cy="1225" r="42" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="2390" cy="890" r="42" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="1595" cy="1425" r="42" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="1490" cy="620" r="42" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="1635" cy="1060" r="42" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="3150" cy="755" r="42" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="1250" cy="1370" r="42" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="2690" cy="650" r="42" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="2300" cy="960" r="42" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="1940" cy="645" r="42" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="1710" cy="1175" r="42" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="1385" cy="820" r="42" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="2205" cy="615" r="42" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="2330" cy="1135" r="42" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="3475" cy="1015" r="42" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="2350" cy="1200" r="42" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="2340" cy="1220" r="42" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="2580" cy="1255" r="42" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="3480" cy="1015" r="42" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="2120" cy="925" r="42" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="2770" cy="295" r="42" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="925" cy="1245" r="42" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="2705" cy="470" r="42" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="2150" cy="1280" r="42" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="340" cy="830" r="42" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="710" cy="1025" r="42" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="2210" cy="1110" r="42" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="900" cy="1050" r="42" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="2335" cy="1220" r="42" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="1720" cy="1255" r="42" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="2920" cy="875" r="42" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="2210" cy="1115" r="42" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="2330" cy="1195" r="42" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="490" cy="845" r="42" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="2500" cy="1530" r="42" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="2240" cy="1090" r="42" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="2325" cy="1235" r="42" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="3165" cy="775" r="28" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="3065" cy="855" r="28" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="3325" cy="1075" r="28" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="1730" cy="595" r="28" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="1660" cy="1100" r="28" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="2425" cy="685" r="28" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="2550" cy="435" r="28" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="505" cy="845" r="28" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="2335" cy="1130" r="28" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="870" cy="860" r="28" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="1680" cy="1360" r="28" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="1215" cy="900" r="28" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="2330" cy="1225" r="28" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="2345" cy="1135" r="28" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="2310" cy="1120" r="28" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="3065" cy="1130" r="28" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="1385" cy="780" r="28" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="1185" cy="470" r="28" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="3140" cy="1005" r="28" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="2940" cy="1135" r="28" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="2560" cy="1285" r="28" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="3480" cy="1020" r="28" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="745" cy="735" r="28" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="3030" cy="815" r="28" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="1695" cy="1395" r="28" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="220" cy="1095" r="28" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="3070" cy="865" r="28" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="2390" cy="1205" r="28" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="2215" cy="1080" r="28" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="1790" cy="1215" r="28" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="2075" cy="1055" r="28" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="1185" cy="1130" r="28" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="2715" cy="1075" r="28" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="3065" cy="860" r="28" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="1665" cy="735" r="28" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="3515" cy="1040" r="28" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="3100" cy="850" r="28" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="2785" cy="1015" r="28" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="2120" cy="1050" r="28" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="2805" cy="1085" r="28" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="2990" cy="1020" r="28" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="1760" cy="1220" r="28" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="2215" cy="835" r="28" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="1135" cy="910" r="28" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="3170" cy="965" r="28" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="420" cy="1150" r="28" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="2315" cy="1120" r="28" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="2775" cy="875" r="28" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="2510" cy="850" r="28" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="2205" cy="1100" r="28" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="2350" cy="1180" r="28" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="1640" cy="1415" r="28" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="1640" cy="1480" r="28" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="1095" cy="810" r="28" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="2430" cy="690" r="28" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="2955" cy="800" r="28" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="1725" cy="1215" r="28" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="2650" cy="810" r="28" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="1280" cy="895" r="28" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="2315" cy="1125" r="28" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="2440" cy="580" r="18" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="3165" cy="940" r="18" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="2355" cy="1200" r="18" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="2215" cy="1100" r="18" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="1425" cy="1405" r="18" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="1235" cy="1315" r="18" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="1185" cy="1135" r="18" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="2220" cy="1080" r="18" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="1640" cy="1455" r="18" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="2325" cy="1230" r="18" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="1745" cy="615" r="18" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="2335" cy="1140" r="18" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="2345" cy="1205" r="18" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="1640" cy="1470" r="18" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="1190" cy="1435" r="18" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="2350" cy="1130" r="18" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="1240" cy="905" r="18" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="3160" cy="950" r="18" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="1910" cy="1005" r="18" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="2270" cy="610" r="18" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="3010" cy="735" r="18" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="850" cy="865" r="18" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="3105" cy="1145" r="18" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="2610" cy="325" r="18" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="2225" cy="820" r="18" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="2425" cy="1100" r="18" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="1395" cy="625" r="18" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="2940" cy="1130" r="18" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="1675" cy="1325" r="18" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="2400" cy="1205" r="18" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="2585" cy="810" r="18" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="3370" cy="705" r="18" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="2310" cy="1115" r="18" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="2345" cy="1220" r="18" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="205" cy="1025" r="18" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="2335" cy="1230" r="18" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="2585" cy="815" r="18" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="2465" cy="965" r="18" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="2080" cy="160" r="18" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="1010" cy="660" r="18" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="3205" cy="865" r="18" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="2340" cy="1225" r="18" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="1530" cy="570" r="18" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="2750" cy="715" r="18" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="2350" cy="1205" r="18" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="2640" cy="790" r="18" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="2345" cy="795" r="18" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="3170" cy="715" r="18" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="1370" cy="1150" r="18" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="3260" cy="1110" r="18" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="1960" cy="755" r="18" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="2220" cy="1085" r="18" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="2310" cy="950" r="18" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="2685" cy="675" r="18" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="2280" cy="1140" r="18" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="1185" cy="1125" r="18" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="615" cy="1035" r="18" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="2360" cy="1220" r="18" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="1255" cy="1365" r="18" fill="url(#lightMaskGrad)" class="cl"/>
-    <circle cx="1550" cy="875" r="18" fill="url(#lightMaskGrad)" class="cl"/>
-        
-                </mask>
-            </defs>
-            <!-- Bright "lit" image revealed only where mask circles are visible -->
-            <image href="Graphics/cryptin_city_bg.png" x="0" y="0" width="3840" height="1648"
-                   preserveAspectRatio="none" mask="url(#lightsMask)"/>
-        </svg>
-
-        <!-- (removed SVG city — replaced with real image background) -->
-        <svg class="hero-city" viewBox="0 0 1920 620" preserveAspectRatio="xMidYMax slice" aria-hidden="true" style="display:none">
-            <defs>
-                <linearGradient id="skyGlow" x1="0" x2="0" y1="0" y2="1">
-                    <stop offset="0%" stop-color="#4a1a08" stop-opacity="0"/>
-                    <stop offset="40%" stop-color="#7a2a10" stop-opacity="0.4"/>
-                    <stop offset="100%" stop-color="#c9954a" stop-opacity="0.55"/>
-                </linearGradient>
-                <linearGradient id="mtnFar" x1="0" x2="0" y1="0" y2="1">
-                    <stop offset="0%" stop-color="#3a2030" stop-opacity="0.5"/>
-                    <stop offset="100%" stop-color="#1a0e1a" stop-opacity="0.9"/>
-                </linearGradient>
-                <linearGradient id="mtnMid" x1="0" x2="0" y1="0" y2="1">
-                    <stop offset="0%" stop-color="#2a141a" stop-opacity="0.85"/>
-                    <stop offset="100%" stop-color="#0e0707" stop-opacity="1"/>
-                </linearGradient>
-                <linearGradient id="cityFar" x1="0" x2="0" y1="0" y2="1">
-                    <stop offset="0%" stop-color="#1a0d08" stop-opacity="0.85"/>
-                    <stop offset="100%" stop-color="#0a0504" stop-opacity="1"/>
-                </linearGradient>
-                <radialGradient id="winGlow" cx="0.5" cy="0.5" r="0.5">
-                    <stop offset="0%" stop-color="#fff4c2" stop-opacity="1"/>
-                    <stop offset="40%" stop-color="#f4c430" stop-opacity="0.9"/>
-                    <stop offset="100%" stop-color="#c9954a" stop-opacity="0"/>
-                </radialGradient>
-                <radialGradient id="lanternGlow" cx="0.5" cy="0.5" r="0.5">
-                    <stop offset="0%" stop-color="#ffd97a" stop-opacity="1"/>
-                    <stop offset="50%" stop-color="#ff8c42" stop-opacity="0.6"/>
-                    <stop offset="100%" stop-color="#c9351f" stop-opacity="0"/>
-                </radialGradient>
-                <linearGradient id="fogBottom" x1="0" x2="0" y1="0" y2="1">
-                    <stop offset="0%" stop-color="#0e0707" stop-opacity="0"/>
-                    <stop offset="60%" stop-color="#0e0707" stop-opacity="0.7"/>
-                    <stop offset="100%" stop-color="#0e0707" stop-opacity="1"/>
-                </linearGradient>
-                <filter id="softGlow">
-                    <feGaussianBlur stdDeviation="3"/>
-                </filter>
-            </defs>
-
-            <!-- Sky atmospheric haze -->
-            <rect width="1920" height="620" fill="url(#skyGlow)"/>
-
-            <!-- Far mountains layer 3 (palest) -->
-            <path d="M0 200 L80 165 L160 185 L240 140 L320 180 L400 130 L480 175 L560 110 L640 165 L720 100 L800 155 L880 90 L960 145 L1040 105 L1120 160 L1200 110 L1280 170 L1360 125 L1440 165 L1520 100 L1600 150 L1680 95 L1760 145 L1840 110 L1920 145 L1920 380 L0 380 Z"
-                  fill="url(#mtnFar)"/>
-
-            <!-- Mid mountains layer 2 -->
-            <path d="M0 270 L70 240 L140 260 L210 220 L280 250 L350 200 L420 235 L490 195 L560 230 L630 180 L700 220 L770 175 L840 215 L910 165 L980 210 L1050 175 L1120 220 L1190 180 L1260 230 L1330 195 L1400 240 L1470 200 L1540 235 L1610 195 L1680 230 L1750 200 L1820 240 L1890 215 L1920 235 L1920 400 L0 400 Z"
-                  fill="url(#mtnMid)"/>
-
-            <!-- City silhouette wide (far buildings) -->
-            <g fill="url(#cityFar)">
-                <!-- Multiple boxy buildings creating a far skyline -->
-                <rect x="50" y="320" width="40" height="80"/>
-                <rect x="100" y="305" width="35" height="95"/>
-                <rect x="145" y="335" width="50" height="65"/>
-                <rect x="205" y="295" width="40" height="105"/>
-                <rect x="255" y="320" width="60" height="80"/>
-                <rect x="325" y="310" width="45" height="90"/>
-                <rect x="380" y="290" width="55" height="110"/>
-                <rect x="445" y="320" width="40" height="80"/>
-                <rect x="495" y="300" width="65" height="100"/>
-                <rect x="570" y="325" width="50" height="75"/>
-                <rect x="630" y="295" width="45" height="105"/>
-                <rect x="685" y="315" width="55" height="85"/>
-                <rect x="750" y="285" width="50" height="115"/>
-                <rect x="810" y="310" width="60" height="90"/>
-                <rect x="880" y="320" width="45" height="80"/>
-                <rect x="935" y="300" width="55" height="100"/>
-                <rect x="1000" y="290" width="60" height="110"/>
-                <rect x="1070" y="320" width="45" height="80"/>
-                <rect x="1125" y="305" width="55" height="95"/>
-                <rect x="1190" y="285" width="50" height="115"/>
-                <rect x="1250" y="310" width="55" height="90"/>
-                <rect x="1315" y="295" width="60" height="105"/>
-                <rect x="1385" y="320" width="50" height="80"/>
-                <rect x="1445" y="300" width="55" height="100"/>
-                <rect x="1510" y="290" width="65" height="110"/>
-                <rect x="1585" y="315" width="50" height="85"/>
-                <rect x="1645" y="295" width="55" height="105"/>
-                <rect x="1710" y="320" width="45" height="80"/>
-                <rect x="1765" y="305" width="55" height="95"/>
-                <rect x="1830" y="285" width="60" height="115"/>
-            </g>
-
-            <!-- City lights layer (windows) — uses class for animation -->
-            <g class="city-lights">
-                <!-- generated rows of lit windows using small rects -->
-                <!-- Row 1 - top windows -->
-                <rect x="62" y="335" width="3" height="4" fill="#f4c430"/>
-                <rect x="72" y="345" width="3" height="4" fill="#ffd97a"/>
-                <rect x="115" y="320" width="3" height="4" fill="#f4c430"/>
-                <rect x="124" y="335" width="3" height="4" fill="#ffd97a"/>
-                <rect x="160" y="350" width="3" height="4" fill="#f4c430"/>
-                <rect x="175" y="345" width="3" height="4" fill="#ffd97a"/>
-                <rect x="220" y="315" width="3" height="4" fill="#f4c430"/>
-                <rect x="232" y="335" width="3" height="4" fill="#ffd97a"/>
-                <rect x="270" y="340" width="3" height="4" fill="#f4c430"/>
-                <rect x="285" y="355" width="3" height="4" fill="#ffd97a"/>
-                <rect x="335" y="325" width="3" height="4" fill="#f4c430"/>
-                <rect x="350" y="340" width="3" height="4" fill="#ffd97a"/>
-                <rect x="395" y="305" width="3" height="4" fill="#f4c430"/>
-                <rect x="412" y="320" width="3" height="4" fill="#ffd97a"/>
-                <rect x="455" y="340" width="3" height="4" fill="#f4c430"/>
-                <rect x="470" y="350" width="3" height="4" fill="#ffd97a"/>
-                <rect x="510" y="320" width="3" height="4" fill="#f4c430"/>
-                <rect x="528" y="335" width="3" height="4" fill="#ffd97a"/>
-                <rect x="582" y="345" width="3" height="4" fill="#f4c430"/>
-                <rect x="600" y="355" width="3" height="4" fill="#ffd97a"/>
-                <rect x="642" y="315" width="3" height="4" fill="#f4c430"/>
-                <rect x="660" y="335" width="3" height="4" fill="#ffd97a"/>
-                <rect x="700" y="335" width="3" height="4" fill="#f4c430"/>
-                <rect x="720" y="345" width="3" height="4" fill="#ffd97a"/>
-                <rect x="765" y="305" width="3" height="4" fill="#f4c430"/>
-                <rect x="785" y="320" width="3" height="4" fill="#ffd97a"/>
-                <rect x="822" y="330" width="3" height="4" fill="#f4c430"/>
-                <rect x="845" y="345" width="3" height="4" fill="#ffd97a"/>
-                <rect x="892" y="345" width="3" height="4" fill="#f4c430"/>
-                <rect x="908" y="335" width="3" height="4" fill="#ffd97a"/>
-                <rect x="950" y="320" width="3" height="4" fill="#f4c430"/>
-                <rect x="970" y="335" width="3" height="4" fill="#ffd97a"/>
-                <rect x="1015" y="305" width="3" height="4" fill="#f4c430"/>
-                <rect x="1035" y="320" width="3" height="4" fill="#ffd97a"/>
-                <rect x="1080" y="340" width="3" height="4" fill="#f4c430"/>
-                <rect x="1098" y="350" width="3" height="4" fill="#ffd97a"/>
-                <rect x="1140" y="320" width="3" height="4" fill="#f4c430"/>
-                <rect x="1158" y="335" width="3" height="4" fill="#ffd97a"/>
-                <rect x="1205" y="305" width="3" height="4" fill="#f4c430"/>
-                <rect x="1222" y="320" width="3" height="4" fill="#ffd97a"/>
-                <rect x="1265" y="325" width="3" height="4" fill="#f4c430"/>
-                <rect x="1285" y="345" width="3" height="4" fill="#ffd97a"/>
-                <rect x="1330" y="315" width="3" height="4" fill="#f4c430"/>
-                <rect x="1350" y="330" width="3" height="4" fill="#ffd97a"/>
-                <rect x="1395" y="340" width="3" height="4" fill="#f4c430"/>
-                <rect x="1410" y="355" width="3" height="4" fill="#ffd97a"/>
-                <rect x="1460" y="320" width="3" height="4" fill="#f4c430"/>
-                <rect x="1478" y="335" width="3" height="4" fill="#ffd97a"/>
-                <rect x="1525" y="305" width="3" height="4" fill="#f4c430"/>
-                <rect x="1545" y="320" width="3" height="4" fill="#ffd97a"/>
-                <rect x="1595" y="335" width="3" height="4" fill="#f4c430"/>
-                <rect x="1612" y="350" width="3" height="4" fill="#ffd97a"/>
-                <rect x="1660" y="315" width="3" height="4" fill="#f4c430"/>
-                <rect x="1680" y="335" width="3" height="4" fill="#ffd97a"/>
-                <rect x="1722" y="340" width="3" height="4" fill="#f4c430"/>
-                <rect x="1740" y="355" width="3" height="4" fill="#ffd97a"/>
-                <rect x="1780" y="325" width="3" height="4" fill="#f4c430"/>
-                <rect x="1800" y="340" width="3" height="4" fill="#ffd97a"/>
-                <rect x="1845" y="305" width="3" height="4" fill="#f4c430"/>
-                <rect x="1865" y="320" width="3" height="4" fill="#ffd97a"/>
-            </g>
-
-            <!-- Mid-ground city wall -->
-            <rect x="0" y="395" width="1920" height="12" fill="#0a0504"/>
-            <g fill="#1a0d08">
-                <rect x="60" y="385" width="14" height="14"/>
-                <rect x="180" y="385" width="14" height="14"/>
-                <rect x="300" y="385" width="14" height="14"/>
-                <rect x="420" y="385" width="14" height="14"/>
-                <rect x="540" y="385" width="14" height="14"/>
-                <rect x="660" y="385" width="14" height="14"/>
-                <rect x="780" y="385" width="14" height="14"/>
-                <rect x="900" y="385" width="14" height="14"/>
-                <rect x="1020" y="385" width="14" height="14"/>
-                <rect x="1140" y="385" width="14" height="14"/>
-                <rect x="1260" y="385" width="14" height="14"/>
-                <rect x="1380" y="385" width="14" height="14"/>
-                <rect x="1500" y="385" width="14" height="14"/>
-                <rect x="1620" y="385" width="14" height="14"/>
-                <rect x="1740" y="385" width="14" height="14"/>
-                <rect x="1860" y="385" width="14" height="14"/>
-            </g>
-
-            <!-- Main city block (mid-ground detailed buildings) -->
-            <g class="mid-city">
-                <!-- Pagoda tower (left of center) -->
-                <g transform="translate(620, 280)">
-                    <!-- base -->
-                    <rect x="-5" y="100" width="50" height="20" fill="#0e0805"/>
-                    <!-- main body tier 1 -->
-                    <rect x="0" y="60" width="40" height="40" fill="#1a0e08"/>
-                    <!-- roof tier 1 -->
-                    <polygon points="-15,60 55,60 45,45 -5,45" fill="#2a1408"/>
-                    <polygon points="-15,60 -5,45 -5,55" fill="#0a0504"/>
-                    <polygon points="55,60 45,45 45,55" fill="#0a0504"/>
-                    <!-- tier 2 body -->
-                    <rect x="6" y="25" width="28" height="22" fill="#1a0e08"/>
-                    <!-- tier 2 roof -->
-                    <polygon points="-5,25 45,25 38,12 2,12" fill="#2a1408"/>
-                    <!-- tier 3 -->
-                    <rect x="13" y="-5" width="14" height="20" fill="#1a0e08"/>
-                    <polygon points="5,-5 35,-5 30,-15 10,-15" fill="#2a1408"/>
-                    <!-- spire -->
-                    <line x1="20" y1="-15" x2="20" y2="-30" stroke="#c9954a" stroke-width="1.5"/>
-                    <circle cx="20" cy="-32" r="2" fill="#f4c430"/>
-                    <!-- windows -->
-                    <rect x="6" y="68" width="3" height="6" fill="#ffd97a"/>
-                    <rect x="13" y="68" width="3" height="6" fill="#ffd97a"/>
-                    <rect x="20" y="68" width="3" height="6" fill="#ffd97a"/>
-                    <rect x="27" y="68" width="3" height="6" fill="#ffd97a"/>
-                    <rect x="34" y="68" width="3" height="6" fill="#ffd97a"/>
-                    <rect x="11" y="32" width="3" height="5" fill="#ffd97a"/>
-                    <rect x="18" y="32" width="3" height="5" fill="#ffd97a"/>
-                    <rect x="25" y="32" width="3" height="5" fill="#ffd97a"/>
-                </g>
-
-                <!-- Central great pagoda (taller, prominent) -->
-                <g transform="translate(900, 200)">
-                    <!-- base -->
-                    <rect x="-15" y="170" width="100" height="25" fill="#0e0805"/>
-                    <!-- tier 1 -->
-                    <rect x="0" y="120" width="70" height="50" fill="#1a0e08"/>
-                    <polygon points="-25,120 95,120 80,95 -10,95" fill="#3a1c08"/>
-                    <polygon points="-25,120 -10,95 -10,115" fill="#0a0504"/>
-                    <polygon points="95,120 80,95 80,115" fill="#0a0504"/>
-                    <!-- tier 2 -->
-                    <rect x="10" y="65" width="50" height="35" fill="#1a0e08"/>
-                    <polygon points="-10,65 80,65 65,42 5,42" fill="#3a1c08"/>
-                    <!-- tier 3 -->
-                    <rect x="20" y="20" width="30" height="25" fill="#1a0e08"/>
-                    <polygon points="5,20 65,20 55,2 15,2" fill="#3a1c08"/>
-                    <!-- tier 4 (top) -->
-                    <rect x="28" y="-15" width="14" height="20" fill="#1a0e08"/>
-                    <polygon points="20,-15 50,-15 45,-25 25,-25" fill="#3a1c08"/>
-                    <!-- spire -->
-                    <line x1="35" y1="-25" x2="35" y2="-45" stroke="#c9954a" stroke-width="2"/>
-                    <circle cx="35" cy="-48" r="3" fill="#f4c430">
-                        <animate attributeName="r" values="3;3.5;3" dur="2s" repeatCount="indefinite"/>
-                    </circle>
-                    <!-- windows -->
-                    <rect x="6" y="135" width="4" height="8" fill="#ffd97a"/>
-                    <rect x="16" y="135" width="4" height="8" fill="#ffd97a"/>
-                    <rect x="26" y="135" width="4" height="8" fill="#ffd97a"/>
-                    <rect x="36" y="135" width="4" height="8" fill="#ffd97a"/>
-                    <rect x="46" y="135" width="4" height="8" fill="#ffd97a"/>
-                    <rect x="56" y="135" width="4" height="8" fill="#ffd97a"/>
-                    <rect x="16" y="78" width="3" height="6" fill="#ffd97a"/>
-                    <rect x="26" y="78" width="3" height="6" fill="#ffd97a"/>
-                    <rect x="36" y="78" width="3" height="6" fill="#ffd97a"/>
-                    <rect x="46" y="78" width="3" height="6" fill="#ffd97a"/>
-                    <rect x="25" y="30" width="3" height="5" fill="#ffd97a"/>
-                    <rect x="33" y="30" width="3" height="5" fill="#ffd97a"/>
-                    <rect x="41" y="30" width="3" height="5" fill="#ffd97a"/>
-                    <!-- lanterns hanging -->
-                    <circle cx="-15" cy="120" r="4" fill="url(#lanternGlow)"/>
-                    <circle cx="95" cy="120" r="4" fill="url(#lanternGlow)"/>
-                    <circle cx="-10" cy="65" r="3.5" fill="url(#lanternGlow)"/>
-                    <circle cx="80" cy="65" r="3.5" fill="url(#lanternGlow)"/>
-                    <circle cx="5" cy="20" r="3" fill="url(#lanternGlow)"/>
-                    <circle cx="65" cy="20" r="3" fill="url(#lanternGlow)"/>
-                </g>
-
-                <!-- Right-side pagoda -->
-                <g transform="translate(1200, 290)">
-                    <rect x="-5" y="90" width="60" height="20" fill="#0e0805"/>
-                    <rect x="0" y="50" width="50" height="40" fill="#1a0e08"/>
-                    <polygon points="-18,50 68,50 58,32 -8,32" fill="#2a1408"/>
-                    <rect x="10" y="15" width="30" height="25" fill="#1a0e08"/>
-                    <polygon points="-2,15 52,15 42,0 8,0" fill="#2a1408"/>
-                    <rect x="20" y="-15" width="10" height="18" fill="#1a0e08"/>
-                    <polygon points="12,-15 38,-15 33,-22 17,-22" fill="#2a1408"/>
-                    <line x1="25" y1="-22" x2="25" y2="-35" stroke="#c9954a" stroke-width="1.5"/>
-                    <circle cx="25" cy="-37" r="2" fill="#f4c430"/>
-                    <rect x="6" y="60" width="3" height="6" fill="#ffd97a"/>
-                    <rect x="14" y="60" width="3" height="6" fill="#ffd97a"/>
-                    <rect x="22" y="60" width="3" height="6" fill="#ffd97a"/>
-                    <rect x="30" y="60" width="3" height="6" fill="#ffd97a"/>
-                    <rect x="38" y="60" width="3" height="6" fill="#ffd97a"/>
-                    <rect x="14" y="22" width="3" height="5" fill="#ffd97a"/>
-                    <rect x="22" y="22" width="3" height="5" fill="#ffd97a"/>
-                    <rect x="30" y="22" width="3" height="5" fill="#ffd97a"/>
-                </g>
-
-                <!-- Smaller buildings flanking the pagodas -->
-                <!-- Left cluster -->
-                <g fill="#150a05">
-                    <rect x="100" y="370" width="60" height="30"/>
-                    <rect x="170" y="365" width="50" height="35"/>
-                    <rect x="225" y="360" width="65" height="40"/>
-                    <rect x="295" y="370" width="55" height="30"/>
-                    <rect x="355" y="365" width="60" height="35"/>
-                    <rect x="420" y="358" width="70" height="42"/>
-                    <rect x="495" y="368" width="55" height="32"/>
-                    <rect x="555" y="362" width="55" height="38"/>
-                </g>
-                <!-- Building roofs (slightly lighter to show 3D) -->
-                <g fill="#2a1408">
-                    <polygon points="100,370 160,370 155,360 105,360"/>
-                    <polygon points="170,365 220,365 215,355 175,355"/>
-                    <polygon points="225,360 290,360 285,348 230,348"/>
-                    <polygon points="295,370 350,370 345,360 300,360"/>
-                    <polygon points="355,365 415,365 410,353 360,353"/>
-                    <polygon points="420,358 490,358 485,345 425,345"/>
-                    <polygon points="495,368 550,368 545,358 500,358"/>
-                    <polygon points="555,362 610,362 605,350 560,350"/>
-                </g>
-
-                <!-- Right cluster (between great pagoda and right pagoda) -->
-                <g fill="#150a05">
-                    <rect x="990" y="370" width="60" height="30"/>
-                    <rect x="1055" y="365" width="55" height="35"/>
-                    <rect x="1115" y="358" width="65" height="42"/>
-                    <rect x="1185" y="368" width="55" height="32"/>
-                </g>
-                <g fill="#2a1408">
-                    <polygon points="990,370 1050,370 1045,360 995,360"/>
-                    <polygon points="1055,365 1110,365 1105,355 1060,355"/>
-                    <polygon points="1115,358 1180,358 1175,346 1120,346"/>
-                    <polygon points="1185,368 1240,368 1235,358 1190,358"/>
-                </g>
-
-                <!-- Far right cluster (after right pagoda) -->
-                <g fill="#150a05">
-                    <rect x="1280" y="370" width="55" height="30"/>
-                    <rect x="1340" y="365" width="60" height="35"/>
-                    <rect x="1405" y="358" width="65" height="42"/>
-                    <rect x="1475" y="368" width="55" height="32"/>
-                    <rect x="1535" y="362" width="55" height="38"/>
-                    <rect x="1595" y="368" width="60" height="32"/>
-                    <rect x="1660" y="360" width="65" height="40"/>
-                    <rect x="1730" y="368" width="55" height="32"/>
-                    <rect x="1790" y="365" width="60" height="35"/>
-                </g>
-                <g fill="#2a1408">
-                    <polygon points="1280,370 1335,370 1330,360 1285,360"/>
-                    <polygon points="1340,365 1400,365 1395,353 1345,353"/>
-                    <polygon points="1405,358 1470,358 1465,346 1410,346"/>
-                    <polygon points="1475,368 1530,368 1525,358 1480,358"/>
-                    <polygon points="1535,362 1590,362 1585,350 1540,350"/>
-                    <polygon points="1595,368 1655,368 1650,358 1600,358"/>
-                    <polygon points="1660,360 1725,360 1720,348 1665,348"/>
-                    <polygon points="1730,368 1785,368 1780,358 1735,358"/>
-                    <polygon points="1790,365 1850,365 1845,353 1795,353"/>
-                </g>
-
-                <!-- Mining quarry pit (right-far ground level) -->
-                <g transform="translate(1740, 400)">
-                    <ellipse cx="0" cy="0" rx="80" ry="20" fill="#080403"/>
-                    <ellipse cx="0" cy="-2" rx="60" ry="12" fill="#1a0e08"/>
-                    <ellipse cx="0" cy="-4" rx="40" ry="8" fill="#3a1c08"/>
-                    <!-- glowing crystal in pit -->
-                    <circle cx="0" cy="-6" r="6" fill="url(#winGlow)" opacity="0.9"/>
-                    <circle cx="-15" cy="-3" r="3" fill="url(#lanternGlow)"/>
-                    <circle cx="20" cy="-5" r="3.5" fill="url(#lanternGlow)"/>
-                </g>
-
-                <!-- Small windows on roof clusters -->
-                <g fill="#ffd97a">
-                    <rect x="115" y="380" width="2" height="3"/>
-                    <rect x="125" y="382" width="2" height="3"/>
-                    <rect x="135" y="380" width="2" height="3"/>
-                    <rect x="180" y="376" width="2" height="3"/>
-                    <rect x="195" y="378" width="2" height="3"/>
-                    <rect x="240" y="372" width="2" height="3"/>
-                    <rect x="255" y="374" width="2" height="3"/>
-                    <rect x="270" y="372" width="2" height="3"/>
-                    <rect x="305" y="380" width="2" height="3"/>
-                    <rect x="325" y="382" width="2" height="3"/>
-                    <rect x="370" y="375" width="2" height="3"/>
-                    <rect x="385" y="377" width="2" height="3"/>
-                    <rect x="430" y="370" width="2" height="3"/>
-                    <rect x="450" y="372" width="2" height="3"/>
-                    <rect x="465" y="370" width="2" height="3"/>
-                    <rect x="510" y="378" width="2" height="3"/>
-                    <rect x="530" y="380" width="2" height="3"/>
-                    <rect x="568" y="374" width="2" height="3"/>
-                    <rect x="588" y="376" width="2" height="3"/>
-                    <rect x="1000" y="380" width="2" height="3"/>
-                    <rect x="1020" y="382" width="2" height="3"/>
-                    <rect x="1065" y="376" width="2" height="3"/>
-                    <rect x="1085" y="378" width="2" height="3"/>
-                    <rect x="1130" y="370" width="2" height="3"/>
-                    <rect x="1150" y="372" width="2" height="3"/>
-                    <rect x="1165" y="370" width="2" height="3"/>
-                    <rect x="1200" y="380" width="2" height="3"/>
-                    <rect x="1220" y="382" width="2" height="3"/>
-                    <rect x="1295" y="380" width="2" height="3"/>
-                    <rect x="1315" y="382" width="2" height="3"/>
-                    <rect x="1355" y="375" width="2" height="3"/>
-                    <rect x="1375" y="377" width="2" height="3"/>
-                    <rect x="1420" y="370" width="2" height="3"/>
-                    <rect x="1440" y="372" width="2" height="3"/>
-                    <rect x="1455" y="370" width="2" height="3"/>
-                    <rect x="1490" y="378" width="2" height="3"/>
-                    <rect x="1510" y="380" width="2" height="3"/>
-                    <rect x="1550" y="374" width="2" height="3"/>
-                    <rect x="1570" y="376" width="2" height="3"/>
-                    <rect x="1610" y="378" width="2" height="3"/>
-                    <rect x="1630" y="380" width="2" height="3"/>
-                    <rect x="1670" y="372" width="2" height="3"/>
-                    <rect x="1690" y="374" width="2" height="3"/>
-                    <rect x="1745" y="378" width="2" height="3"/>
-                    <rect x="1765" y="380" width="2" height="3"/>
-                    <rect x="1800" y="376" width="2" height="3"/>
-                    <rect x="1820" y="378" width="2" height="3"/>
-                </g>
-
-                <!-- Floating lanterns above the city -->
-                <g class="lanterns">
-                    <circle cx="200" cy="240" r="2.5" fill="url(#lanternGlow)"/>
-                    <circle cx="320" cy="220" r="3" fill="url(#lanternGlow)"/>
-                    <circle cx="450" cy="200" r="2" fill="url(#lanternGlow)"/>
-                    <circle cx="540" cy="245" r="2.5" fill="url(#lanternGlow)"/>
-                    <circle cx="700" cy="180" r="3" fill="url(#lanternGlow)"/>
-                    <circle cx="780" cy="220" r="2" fill="url(#lanternGlow)"/>
-                    <circle cx="850" cy="160" r="3.5" fill="url(#lanternGlow)"/>
-                    <circle cx="1050" cy="190" r="2.5" fill="url(#lanternGlow)"/>
-                    <circle cx="1140" cy="235" r="2" fill="url(#lanternGlow)"/>
-                    <circle cx="1280" cy="210" r="3" fill="url(#lanternGlow)"/>
-                    <circle cx="1380" cy="180" r="2.5" fill="url(#lanternGlow)"/>
-                    <circle cx="1490" cy="225" r="2" fill="url(#lanternGlow)"/>
-                    <circle cx="1600" cy="195" r="3" fill="url(#lanternGlow)"/>
-                    <circle cx="1700" cy="240" r="2" fill="url(#lanternGlow)"/>
-                </g>
-
-                <!-- Smoke from chimneys -->
-                <g class="smoke" fill="rgba(160, 130, 100, 0.15)" filter="url(#softGlow)">
-                    <ellipse cx="240" cy="345" rx="12" ry="20"/>
-                    <ellipse cx="430" cy="335" rx="14" ry="25"/>
-                    <ellipse cx="1130" cy="335" rx="12" ry="22"/>
-                    <ellipse cx="1670" cy="340" rx="14" ry="25"/>
-                </g>
-            </g>
-
-            <!-- Foreground silhouette (closer rooftops, bigger and darker) -->
-            <g fill="#050302">
-                <polygon points="0,460 60,440 120,455 180,435 240,448 300,430 360,455 420,442 480,425 540,455 600,440 660,420 720,450 780,445 840,415 900,440 960,455 1020,425 1080,448 1140,430 1200,455 1260,440 1320,420 1380,455 1440,445 1500,425 1560,450 1620,438 1680,418 1740,455 1800,440 1860,420 1920,450 1920,620 0,620 Z"/>
-            </g>
-            <g fill="#0a0504">
-                <rect x="40" y="445" width="35" height="18"/>
-                <rect x="100" y="450" width="40" height="14"/>
-                <rect x="170" y="442" width="30" height="20"/>
-                <rect x="225" y="450" width="45" height="16"/>
-                <rect x="290" y="438" width="35" height="22"/>
-                <rect x="355" y="448" width="40" height="14"/>
-                <rect x="420" y="440" width="50" height="20"/>
-                <rect x="490" y="445" width="30" height="18"/>
-                <rect x="540" y="438" width="45" height="22"/>
-                <rect x="610" y="446" width="35" height="16"/>
-                <rect x="680" y="440" width="40" height="20"/>
-                <rect x="745" y="448" width="35" height="14"/>
-                <rect x="810" y="438" width="40" height="22"/>
-                <rect x="870" y="445" width="45" height="16"/>
-                <rect x="935" y="442" width="35" height="20"/>
-                <rect x="990" y="448" width="40" height="14"/>
-                <rect x="1050" y="438" width="50" height="22"/>
-                <rect x="1115" y="446" width="35" height="16"/>
-                <rect x="1170" y="440" width="40" height="20"/>
-                <rect x="1235" y="448" width="35" height="14"/>
-                <rect x="1295" y="438" width="45" height="22"/>
-                <rect x="1360" y="445" width="40" height="18"/>
-                <rect x="1425" y="442" width="35" height="20"/>
-                <rect x="1485" y="448" width="40" height="14"/>
-                <rect x="1545" y="438" width="45" height="22"/>
-                <rect x="1610" y="446" width="35" height="16"/>
-                <rect x="1670" y="440" width="40" height="20"/>
-                <rect x="1735" y="448" width="35" height="14"/>
-                <rect x="1795" y="438" width="40" height="22"/>
-                <rect x="1855" y="445" width="40" height="18"/>
-            </g>
-            <!-- Foreground roof windows -->
-            <g fill="#ffd97a" class="city-lights-fore">
-                <rect x="50" y="450" width="3" height="4"/>
-                <rect x="60" y="453" width="3" height="4"/>
-                <rect x="115" y="455" width="3" height="4"/>
-                <rect x="125" y="458" width="3" height="4"/>
-                <rect x="180" y="448" width="3" height="4"/>
-                <rect x="190" y="450" width="3" height="4"/>
-                <rect x="240" y="455" width="3" height="4"/>
-                <rect x="252" y="458" width="3" height="4"/>
-                <rect x="300" y="445" width="3" height="4"/>
-                <rect x="312" y="448" width="3" height="4"/>
-                <rect x="370" y="453" width="3" height="4"/>
-                <rect x="380" y="456" width="3" height="4"/>
-                <rect x="435" y="448" width="3" height="4"/>
-                <rect x="455" y="450" width="3" height="4"/>
-                <rect x="500" y="452" width="3" height="4"/>
-                <rect x="555" y="445" width="3" height="4"/>
-                <rect x="570" y="448" width="3" height="4"/>
-                <rect x="620" y="453" width="3" height="4"/>
-                <rect x="690" y="448" width="3" height="4"/>
-                <rect x="705" y="450" width="3" height="4"/>
-                <rect x="755" y="455" width="3" height="4"/>
-                <rect x="820" y="448" width="3" height="4"/>
-                <rect x="835" y="450" width="3" height="4"/>
-                <rect x="880" y="452" width="3" height="4"/>
-                <rect x="950" y="450" width="3" height="4"/>
-                <rect x="1000" y="455" width="3" height="4"/>
-                <rect x="1015" y="453" width="3" height="4"/>
-                <rect x="1065" y="445" width="3" height="4"/>
-                <rect x="1080" y="448" width="3" height="4"/>
-                <rect x="1125" y="453" width="3" height="4"/>
-                <rect x="1180" y="448" width="3" height="4"/>
-                <rect x="1195" y="450" width="3" height="4"/>
-                <rect x="1245" y="455" width="3" height="4"/>
-                <rect x="1305" y="445" width="3" height="4"/>
-                <rect x="1320" y="448" width="3" height="4"/>
-                <rect x="1370" y="452" width="3" height="4"/>
-                <rect x="1435" y="448" width="3" height="4"/>
-                <rect x="1495" y="455" width="3" height="4"/>
-                <rect x="1510" y="453" width="3" height="4"/>
-                <rect x="1560" y="445" width="3" height="4"/>
-                <rect x="1620" y="453" width="3" height="4"/>
-                <rect x="1680" y="448" width="3" height="4"/>
-                <rect x="1745" y="455" width="3" height="4"/>
-                <rect x="1810" y="445" width="3" height="4"/>
-                <rect x="1865" y="450" width="3" height="4"/>
-            </g>
-
-            <!-- Atmospheric fog band (covers lower half subtly) -->
-            <rect x="0" y="380" width="1920" height="240" fill="url(#fogBottom)"/>
-
-            <!-- Animated fog drift -->
-            <ellipse class="fog-cloud fog-1" cx="300" cy="430" rx="280" ry="40" fill="rgba(80, 50, 40, 0.25)" filter="url(#softGlow)"/>
-            <ellipse class="fog-cloud fog-2" cx="900" cy="450" rx="320" ry="35" fill="rgba(80, 50, 40, 0.22)" filter="url(#softGlow)"/>
-            <ellipse class="fog-cloud fog-3" cx="1500" cy="425" rx="260" ry="42" fill="rgba(80, 50, 40, 0.25)" filter="url(#softGlow)"/>
-
-        </svg>
-
-        <!-- Stacked progressive-blur strips (top→bottom: weakest→strongest) -->
-        <div class="hero-blur hb-1"></div>
-        <div class="hero-blur hb-2"></div>
-        <div class="hero-blur hb-3"></div>
-        <div class="hero-blur hb-4"></div>
-        <div class="hero-embers"></div>
-        <div class="hero-glow"></div>
-        <div class="hero-overlay"></div>
+        <div class="hero-video-gradient"></div>
+        <canvas id="heroParticles" class="hero-particles" aria-hidden="true"></canvas>
 
         <div class="hero-content">
-            <img src="Graphics/Cryptin_with_Slogan.png" alt="Cryptin" class="hero-logo">
+            <img src="Graphics/Cryptin_with_Slogan.png" alt="Cryptin — Das Crypto MMORPG" class="hero-logo" id="heroLogo">
+            <div class="hero-buttons" id="heroButtons">
+                <a href="#download" class="btn-gold btn-lg">JETZT SPIELEN</a>
+                <a href="#about" class="btn-ghost btn-lg">MEHR ERFAHREN</a>
+            </div>
         </div>
-    </section>
 
-    <!-- ===== LIVE SERVER STRIP ===== -->
-    <div class="live-strip">
-        <div class="live-strip-inner">
-            <div class="live-item live-status-item">
-                <span class="live-dot"></span>
-                <span>Server Online</span>
-            </div>
-            <div class="live-divider"></div>
-            <div class="live-item">
-                <span class="live-label">Online</span>
-                <span class="live-val" data-count="284">284</span>
-            </div>
-            <div class="live-divider"></div>
-            <div class="live-item">
-                <span class="live-label">24h Spieler</span>
-                <span class="live-val" data-count="1247">1.247</span>
-            </div>
-            <div class="live-divider"></div>
-            <div class="live-item">
-                <span class="live-label">Charaktere</span>
-                <span class="live-val" data-count="3842">3.842</span>
-            </div>
-            <div class="live-divider"></div>
-            <div class="live-item">
-                <span class="live-label">Konten</span>
-                <span class="live-val" data-count="5621">5.621</span>
-            </div>
-            <div class="live-divider"></div>
-            <div class="live-item">
-                <span class="live-label">Gilden</span>
-                <span class="live-val" data-count="87">87</span>
-            </div>
-            <div class="live-divider"></div>
-            <span class="live-badge">BETA</span>
-            <a href="#register" class="live-cta">Jetzt spielen <span class="live-cta-arrow">→</span></a>
-        </div>
-    </div>
-
-    <!-- ===== PILLARS / FEATURE SHOWCASE ===== -->
-    <section class="pillars-section" id="features">
-        <div class="pillars-inner">
-            <div class="pillars-header">
-                <span class="pillars-eyebrow">Das Abenteuer beginnt</span>
-                <h2 class="pillars-title">Forge Your <span>Legend</span></h2>
-                <p class="pillars-sub">Erkunde eine riesige Welt voller Geheimnisse. Schürfe seltene Erze, besiege legendäre Bosse und baue dein Imperium aus.</p>
-            </div>
-            <div class="pillars-grid">
-                <div class="pillar-card" data-pillar="mine">
-                    <div class="pillar-glow"></div>
-                    <div class="pillar-icon-wrap">
-                        <span class="pillar-icon">⛏</span>
-                    </div>
-                    <h3 class="pillar-title">Mine</h3>
-                    <p class="pillar-desc">Schürfe seltene Ressourcen in gefährlichen Minen. Jeder Schwung deiner Spitzhacke könnte dein Glück bedeuten.</p>
+        <div class="hero-status-bar">
+            <div class="hero-status-inner">
+                <div class="status-item">
+                    <span class="status-dot status-dot--green"></span>
+                    <span class="status-label">SPIELER ONLINE:</span>
+                    <span class="status-value counter" data-target="1247">0</span>
                 </div>
-                <div class="pillar-card" data-pillar="fight">
-                    <div class="pillar-glow"></div>
-                    <div class="pillar-icon-wrap">
-                        <span class="pillar-icon">⚔</span>
-                    </div>
-                    <h3 class="pillar-title">Fight</h3>
-                    <p class="pillar-desc">Bezwinge legendäre Bosse und mächtige Monster. Beweise dich im epischen PvP gegen andere Helden.</p>
+                <div class="status-item">
+                    <span class="status-dot status-dot--green"></span>
+                    <span class="status-label">SERVER STATUS:</span>
+                    <span class="status-value">ONLINE</span>
                 </div>
-                <div class="pillar-card" data-pillar="earn">
-                    <div class="pillar-glow"></div>
-                    <div class="pillar-icon-wrap">
-                        <span class="pillar-icon">◈</span>
-                    </div>
-                    <h3 class="pillar-title">Earn</h3>
-                    <p class="pillar-desc">Verwandle deine Beute in wertvolle Cryptin Coins. Handle im Marktplatz und maximiere deinen Profit.</p>
+                <div class="status-item">
+                    <span class="status-dot status-dot--gold"></span>
+                    <span class="status-label">UPTIME:</span>
+                    <span class="status-value">99.8%</span>
                 </div>
-                <div class="pillar-card" data-pillar="rule">
-                    <div class="pillar-glow"></div>
-                    <div class="pillar-icon-wrap">
-                        <span class="pillar-icon">♔</span>
-                    </div>
-                    <h3 class="pillar-title">Rule</h3>
-                    <p class="pillar-desc">Führe eine Gilde, erobere Gebiete und herrsche über das gesamte Reich. Dein Name wird unsterblich.</p>
-                </div>
-            </div>
-            <div class="pillars-cta">
-                <a href="#register" class="btn-cta-primary">
-                    <span class="btn-cta-shine"></span>
-                    Jetzt Kostenlos Spielen
-                </a>
-                <a href="#download" class="btn-cta-ghost">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16"><path d="M12 5v14M19 12l-7 7-7-7"/></svg>
-                    Download
-                </a>
             </div>
         </div>
     </section>
 
-    <!-- ===== MAIN GRID ===== -->
-    <div class="layout">
-
-        <!-- ===== LEFT SIDEBAR ===== -->
-        <aside class="col-left">
-
-            <!-- LOGIN -->
-            <div class="card">
-                <div class="card-head">
-                    <span class="card-head-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/></svg>
-                    </span>
-                    <h3>Benutzerbereich</h3>
+    <!-- ===== SECTION 2: SERVER STATS ===== -->
+    <section class="section-stats" id="stats">
+        <div class="section-inner">
+            <div class="section-heading reveal-up">
+                <h2 class="heading-display">DAS REICH LEBT</h2>
+                <p class="heading-sub">Echtzeit-Statistiken unseres Reiches</p>
+            </div>
+            <div class="stats-grid">
+                <div class="stat-card reveal-up" data-delay="0">
+                    <div class="stat-value counter" data-target="1247">0</div>
+                    <div class="stat-label">SPIELER ONLINE</div>
                 </div>
-                <form class="login-form" onsubmit="event.preventDefault()">
-                    <div class="input-wrap">
-                        <span class="input-icon">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/></svg>
-                        </span>
-                        <input type="text" placeholder="Benutzername" autocomplete="username">
+                <div class="stat-card reveal-up" data-delay="1">
+                    <div class="stat-value counter" data-target="15832">0</div>
+                    <div class="stat-label">ACCOUNTS</div>
+                </div>
+                <div class="stat-card reveal-up" data-delay="2">
+                    <div class="stat-value stat-pct">99.8%</div>
+                    <div class="stat-label">UPTIME</div>
+                </div>
+                <div class="stat-card reveal-up" data-delay="3">
+                    <div class="stat-value counter" data-target="284">0</div>
+                    <div class="stat-label">AKTIVE GILDEN</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===== SECTION 3: CINEMATIC FEATURE ===== -->
+    <section class="section-feature" id="about">
+        <div class="feature-image-wrap">
+            <img src="Graphics/cryptin_city_bg_dark.png" alt="Cryptin City" class="feature-image parallax-img" loading="lazy">
+        </div>
+        <div class="feature-content">
+            <span class="feature-label">WORLDS FIRST CRYPTO MMORPG</span>
+            <h2 class="heading-display feature-heading reveal-up">EIN REICH.<br>ECHTE BELOHNUNGEN.</h2>
+            <p class="feature-body reveal-up">
+                Cryptin verbindet das klassische Metin2-Gameplay mit echter Kryptowährung. Kämpfe, handle, herrsche — und verdiene dabei wirklich.
+            </p>
+            <ul class="feature-list">
+                <li class="feature-list-item stagger-left">
+                    <span class="feature-check">✓</span>
+                    Im Spiel Krypto verdienen
+                </li>
+                <li class="feature-list-item stagger-left">
+                    <span class="feature-check">✓</span>
+                    Dungeons &amp; epische Bosse
+                </li>
+                <li class="feature-list-item stagger-left">
+                    <span class="feature-check">✓</span>
+                    Gildenkriege &amp; Territorien
+                </li>
+                <li class="feature-list-item stagger-left">
+                    <span class="feature-check">✓</span>
+                    PvP &amp; PvE Arenen
+                </li>
+                <li class="feature-list-item stagger-left">
+                    <span class="feature-check">✓</span>
+                    Item Shop mit echten Assets
+                </li>
+            </ul>
+        </div>
+    </section>
+
+    <!-- ===== SECTION 4: RANGLISTE ===== -->
+    <section class="section-ranking" id="ranking">
+        <div class="section-inner">
+            <div class="section-heading reveal-up">
+                <h2 class="heading-display">LEGENDEN DES REICHES</h2>
+                <p class="heading-sub">Die stärksten Krieger und mächtigsten Gilden</p>
+            </div>
+            <div class="ranking-grid">
+                <!-- Top Spieler -->
+                <div class="ranking-panel reveal-up">
+                    <h3 class="ranking-panel-title">TOP SPIELER</h3>
+                    <ul class="ranking-list">
+                        <li class="ranking-entry rank-1">
+                            <span class="rank-num">👑</span>
+                            <span class="rank-avatar"></span>
+                            <span class="rank-name">DragonSlayer99</span>
+                            <span class="rank-detail">Lv. 95 Krieger</span>
+                            <span class="rank-score">98,420</span>
+                        </li>
+                        <li class="ranking-entry rank-2">
+                            <span class="rank-num">2</span>
+                            <span class="rank-avatar"></span>
+                            <span class="rank-name">ShadowMaster</span>
+                            <span class="rank-detail">Lv. 93 Ninja</span>
+                            <span class="rank-score">94,110</span>
+                        </li>
+                        <li class="ranking-entry rank-3">
+                            <span class="rank-num">3</span>
+                            <span class="rank-avatar"></span>
+                            <span class="rank-name">IronFist</span>
+                            <span class="rank-detail">Lv. 91 Shaman</span>
+                            <span class="rank-score">89,750</span>
+                        </li>
+                        <li class="ranking-entry">
+                            <span class="rank-num">4</span>
+                            <span class="rank-avatar"></span>
+                            <span class="rank-name">CryptoKing</span>
+                            <span class="rank-detail">Lv. 89 Lycan</span>
+                            <span class="rank-score">85,300</span>
+                        </li>
+                        <li class="ranking-entry">
+                            <span class="rank-num">5</span>
+                            <span class="rank-avatar"></span>
+                            <span class="rank-name">NightBlade</span>
+                            <span class="rank-detail">Lv. 87 Assassin</span>
+                            <span class="rank-score">81,920</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Top Gilden -->
+                <div class="ranking-panel reveal-up" data-delay="1">
+                    <h3 class="ranking-panel-title">TOP GILDEN</h3>
+                    <ul class="ranking-list">
+                        <li class="ranking-entry rank-1">
+                            <span class="rank-num">👑</span>
+                            <span class="rank-avatar rank-avatar--guild"></span>
+                            <span class="rank-name">GoldenOrder</span>
+                            <span class="rank-detail">284/300 Mitglieder</span>
+                            <span class="rank-score">142,800</span>
+                        </li>
+                        <li class="ranking-entry rank-2">
+                            <span class="rank-num">2</span>
+                            <span class="rank-avatar rank-avatar--guild"></span>
+                            <span class="rank-name">DragonClan</span>
+                            <span class="rank-detail">271/300 Mitglieder</span>
+                            <span class="rank-score">131,500</span>
+                        </li>
+                        <li class="ranking-entry rank-3">
+                            <span class="rank-num">3</span>
+                            <span class="rank-avatar rank-avatar--guild"></span>
+                            <span class="rank-name">SilverBlades</span>
+                            <span class="rank-detail">265/300 Mitglieder</span>
+                            <span class="rank-score">127,200</span>
+                        </li>
+                        <li class="ranking-entry">
+                            <span class="rank-num">4</span>
+                            <span class="rank-avatar rank-avatar--guild"></span>
+                            <span class="rank-name">IronLegion</span>
+                            <span class="rank-detail">258/300 Mitglieder</span>
+                            <span class="rank-score">118,900</span>
+                        </li>
+                        <li class="ranking-entry">
+                            <span class="rank-num">5</span>
+                            <span class="rank-avatar rank-avatar--guild"></span>
+                            <span class="rank-name">ShadowPact</span>
+                            <span class="rank-detail">247/300 Mitglieder</span>
+                            <span class="rank-score">112,450</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <div class="ranking-footer reveal-up">
+                <a href="#ranking" class="btn-gold">VOLLSTÄNDIGE RANGLISTE</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===== SECTION 5: NEWS ===== -->
+    <section class="section-news" id="news">
+        <div class="section-inner">
+            <div class="section-heading reveal-up">
+                <h2 class="heading-display">AKTUELLES</h2>
+                <p class="heading-sub">Neuigkeiten aus dem Reich</p>
+            </div>
+            <div class="news-grid">
+                <article class="news-card reveal-up" data-delay="0">
+                    <div class="news-img">
+                        <span class="news-badge news-badge--update">UPDATE</span>
                     </div>
-                    <div class="input-wrap">
-                        <span class="input-icon">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="11" width="16" height="10" rx="1"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
-                        </span>
-                        <input type="password" placeholder="Passwort" autocomplete="current-password">
-                        <button type="button" class="input-eye" aria-label="Passwort anzeigen">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                        </button>
+                    <div class="news-body">
+                        <p class="news-date">März 2026</p>
+                        <h3 class="news-title">Patch 2.4 — Neue Dungeon Zone</h3>
+                        <p class="news-desc">Die sagenumwobene Drachenfestung öffnet ihre Tore. Neue Bosse, seltene Beute und exklusive Krypto-Rewards warten auf die mutigsten Krieger.</p>
+                        <a href="#news" class="news-read">Weiterlesen →</a>
                     </div>
-                    <div class="captcha">
-                        <label class="captcha-check">
-                            <input type="checkbox">
-                            <span class="captcha-box"></span>
-                            <span>Ich bin kein Roboter.</span>
-                        </label>
-                        <span class="captcha-logo">reCAPTCHA</span>
+                </article>
+                <article class="news-card reveal-up" data-delay="1">
+                    <div class="news-img news-img--event">
+                        <span class="news-badge news-badge--event">EVENT</span>
                     </div>
-                    <button type="submit" class="btn-primary">Anmeldung</button>
-                    <a href="#" class="link-muted">Passwort vergessen?</a>
-                    <p class="login-foot">Noch kein Account? <a href="#register">Account erstellen!</a></p>
-                </form>
-            </div>
-
-            <!-- TOP 3 PLAYERS -->
-            <div class="card">
-                <div class="card-head">
-                    <span class="card-head-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 4h12v3a6 6 0 0 1-12 0V4z"/><path d="M6 4H3v2a3 3 0 0 0 3 3M18 4h3v2a3 3 0 0 1-3 3M9 18h6M12 13v5"/></svg>
-                    </span>
-                    <h3>Top 3 Spieler</h3>
-                </div>
-                <div class="top3">
-                    <div class="top3-card top3-2">
-                        <span class="top3-rank">2</span>
-                        <div class="top3-avatar" data-class="warrior"></div>
-                        <span class="top3-name">GoldForge</span>
+                    <div class="news-body">
+                        <p class="news-date">April 2026</p>
+                        <h3 class="news-title">Guild War Event</h3>
+                        <p class="news-desc">Messe dich mit den stärksten Gilden des Reiches. Der Sieger erhält ein exklusives Territorium und einen massiven Krypto-Jackpot.</p>
+                        <a href="#news" class="news-read">Weiterlesen →</a>
                     </div>
-                    <div class="top3-card top3-1">
-                        <span class="top3-crown">♔</span>
-                        <span class="top3-rank">1</span>
-                        <div class="top3-avatar" data-class="sura"></div>
-                        <span class="top3-name">DiamondMiner</span>
+                </article>
+                <article class="news-card reveal-up" data-delay="2">
+                    <div class="news-img news-img--news">
+                        <span class="news-badge news-badge--news">NEWS</span>
                     </div>
-                    <div class="top3-card top3-3">
-                        <span class="top3-rank">3</span>
-                        <div class="top3-avatar" data-class="ninja"></div>
-                        <span class="top3-name">QuantumDigger</span>
+                    <div class="news-body">
+                        <p class="news-date">Mai 2026</p>
+                        <h3 class="news-title">Krypto Auszahlung Rekord</h3>
+                        <p class="news-desc">Unsere Spieler haben im April 2026 einen Rekord aufgestellt — über 48.000 EUR wurden in echter Kryptowährung ausgezahlt.</p>
+                        <a href="#news" class="news-read">Weiterlesen →</a>
                     </div>
-                </div>
-                <a href="#ranking" class="btn-secondary btn-block">Vollständige Rangliste</a>
+                </article>
             </div>
+        </div>
+    </section>
 
-        </aside>
-
-        <!-- ===== MIDDLE COLUMN — NEWS ===== -->
-        <main class="col-main">
-
-            <!-- News header banner -->
-            <div class="news-banner">
-                <div class="news-banner-img"></div>
-                <div class="news-banner-content">
-                    <span class="news-banner-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11v3l11 4V7L3 11z"/><path d="M14 9.5v5"/><path d="M18 8a4 4 0 0 1 0 8"/></svg>
-                    </span>
-                    <h2>Neuigkeiten</h2>
-                </div>
+    <!-- ===== SECTION 6: DOWNLOAD CTA ===== -->
+    <section class="section-download" id="download">
+        <div class="download-pattern" aria-hidden="true"></div>
+        <div class="section-inner section-inner--center reveal-up">
+            <h2 class="heading-display heading-display--xl">TRITT DEM REICH BEI</h2>
+            <p class="download-sub">Kostenlos spielen — keine Kreditkarte erforderlich</p>
+            <div class="download-buttons">
+                <a href="#" class="btn-gold btn-lg">CLIENT HERUNTERLADEN</a>
+                <a href="#" class="btn-ghost btn-lg" id="btnRegisterCta">ACCOUNT ERSTELLEN</a>
             </div>
-
-            <!-- Filter tabs -->
-            <div class="news-tabs">
-                <button class="news-tab active" data-tab="all">
-                    <span class="tab-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/></svg>
-                    </span>
-                    All
-                </button>
-                <button class="news-tab" data-tab="news">
-                    <span class="tab-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16v16H4z"/><path d="M4 9h16M9 4v16"/></svg>
-                    </span>
-                    News
-                </button>
-                <button class="news-tab" data-tab="events">
-                    <span class="tab-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg>
-                    </span>
-                    Events
-                </button>
-                <button class="news-tab" data-tab="patch">
-                    <span class="tab-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 4l6 6"/><path d="M2 22l8-8"/><path d="M16 2c2 0 6 4 6 6l-4 4-6-6 4-4z"/></svg>
-                    </span>
-                    Patchnotes
-                </button>
-                <button class="news-tab" data-tab="previews">
-                    <span class="tab-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 9h18"/></svg>
-                    </span>
-                    Previews
-                </button>
-            </div>
-
-            <!-- News article -->
-            <article class="news-article">
-                <div class="news-article-head">
-                    <span class="news-pill">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7h18l-2 13H5L3 7z"/><path d="M8 7V5a4 4 0 0 1 8 0v2"/></svg>
-                        Itemshop
-                    </span>
-                    <h3 class="news-article-title">Cryptin Coins sind jetzt verfügbar! <span class="news-article-date">01.05.2026</span></h3>
-                </div>
-
-                <div class="news-article-img"></div>
-
-                <div class="news-article-body">
-                    <p>Möchtest du <b>Cryptin Coins</b> für den Item-Shop erwerben?</p>
-                    <p>Wenn du dich für einen Kauf über den Operator entscheidest, stelle bitte sicher, dass du eine gültige E-Mail-Adresse angibst, auf die du vollen Zugriff hast.</p>
-                    <p>Nach Abschluss deines Kaufs wird automatisch ein Voucher-Code an die angegebene E-Mail-Adresse gesendet.</p>
-                    <p>Dieser Code muss am folgenden Ort eingelöst werden ...</p>
-                    <a href="#" class="btn-primary news-article-cta">Weiterlesen <span>›</span></a>
-                </div>
-            </article>
-
-            <!-- Pagination -->
-            <div class="pagination">
-                <button class="page active">1</button>
-                <button class="page">2</button>
-                <button class="page">3</button>
-                <span class="page-dots">…</span>
-                <button class="page">6</button>
-                <button class="page page-last">Letzte Seite</button>
-            </div>
-
-        </main>
-
-        <!-- ===== RIGHT SIDEBAR ===== -->
-        <aside class="col-right">
-
-            <!-- UPCOMING EVENTS -->
-            <div class="card">
-                <div class="card-head">
-                    <span class="card-head-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
-                    </span>
-                    <h3>Bevorstehende Events</h3>
-                </div>
-                <ul class="event-list">
-                    <li class="event-row">
-                        <div class="event-icon" data-evt="exp"></div>
-                        <div class="event-info">
-                            <b>XP Boost Weekend</b>
-                            <span class="event-time">⏳ Ends in: <em>09Std 42Min</em> <span class="status-on"></span></span>
-                        </div>
-                    </li>
-                    <li class="event-row">
-                        <div class="event-icon" data-evt="boss"></div>
-                        <div class="event-info">
-                            <b>Boss Loot x2</b>
-                            <span class="event-time">⏳ Ends in: <em>14Std 18Min</em> <span class="status-on"></span></span>
-                        </div>
-                    </li>
-                    <li class="event-row">
-                        <div class="event-icon" data-evt="metin"></div>
-                        <div class="event-info">
-                            <b>Double Cryptin Drop</b>
-                            <span class="event-time">⏳ Ends in: <em>22Std 05Min</em> <span class="status-on"></span></span>
-                        </div>
-                    </li>
-                    <li class="event-row">
-                        <div class="event-icon" data-evt="king"></div>
-                        <div class="event-info">
-                            <b>Vein King Hunt</b>
-                            <span class="event-time">⏳ Ends in: <em>03Std 27Min</em> <span class="status-on"></span></span>
-                        </div>
-                    </li>
-                </ul>
-                <a href="#" class="btn-secondary btn-block">
-                    <span class="btn-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>
-                    </span>
-                    Event Kalender
-                </a>
-            </div>
-
-            <!-- SERVER STATS -->
-            <div class="card">
-                <div class="card-head">
-                    <span class="card-head-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 17 9 11 13 15 21 7"/><polyline points="14 7 21 7 21 14"/></svg>
-                    </span>
-                    <h3>Server Statistiken</h3>
-                </div>
-                <ul class="stat-list">
-                    <li><span>Spieler online</span><b>284</b></li>
-                    <li><span>Spieler online (24h)</span><b>1.247</b></li>
-                    <li><span>Charaktere erstellt</span><b>3.842</b></li>
-                    <li><span>Konten erstellt</span><b>5.621</b></li>
-                    <li><span>Gilden erstellt</span><b>87</b></li>
-                </ul>
-            </div>
-
-            <!-- TOP 5 GUILDS -->
-            <div class="card">
-                <div class="card-head">
-                    <span class="card-head-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21V9l5-4 4 4 4-4 5 4v12z"/><path d="M9 21v-6h6v6"/></svg>
-                    </span>
-                    <h3>Top 5 Gilden</h3>
-                </div>
-                <ul class="guild-list">
-                    <li>
-                        <span class="g-rank">1</span>
-                        <span class="g-flag" data-flag="r"></span>
-                        <span class="g-name">PickaxePack</span>
-                        <span class="g-score">24.500</span>
-                    </li>
-                    <li>
-                        <span class="g-rank">2</span>
-                        <span class="g-flag" data-flag="o"></span>
-                        <span class="g-name">GoldRush</span>
-                        <span class="g-score">21.300</span>
-                    </li>
-                    <li>
-                        <span class="g-rank">3</span>
-                        <span class="g-flag" data-flag="b"></span>
-                        <span class="g-name">QuantumCorp</span>
-                        <span class="g-score">15.800</span>
-                    </li>
-                    <li>
-                        <span class="g-rank">4</span>
-                        <span class="g-flag" data-flag="b"></span>
-                        <span class="g-name">CaveDivers</span>
-                        <span class="g-score">12.450</span>
-                    </li>
-                    <li>
-                        <span class="g-rank">5</span>
-                        <span class="g-flag" data-flag="r"></span>
-                        <span class="g-name">MagmaForge</span>
-                        <span class="g-score">8.920</span>
-                    </li>
-                </ul>
-                <a href="#" class="btn-secondary btn-block">Vollständige Rangliste</a>
-            </div>
-
-        </aside>
-
-    </div>
-
-    <!-- ===== FLOATING SIDE WIDGETS ===== -->
-    <div class="side-fixed">
-        <a href="#discord" class="side-discord">
-            <span class="side-discord-icon">
-                <img src="Graphics/cryptin_coin_logo.png" alt="">
-            </span>
-            <div class="side-discord-info">
-                <b>Cryptin – The Future</b>
-                <span><span class="status-on"></span>142 ONLINE</span>
-            </div>
-        </a>
-    </div>
+        </div>
+    </section>
 
     <!-- ===== FOOTER ===== -->
-    <footer class="footer">
-        <div class="footer-top">
-            <nav class="footer-nav-links">
-                <a href="#">Elitepvpers</a>
-                <a href="#">Metin2Downloads</a>
-                <a href="#">Inforge</a>
-                <a href="#">Metin2 P Server</a>
-            </nav>
-            <div class="footer-brand">
-                <a href="#" class="footer-logo" aria-label="Cryptin">
-                    <span class="footer-logo-ring"></span>
-                    <img src="Graphics/cryptin_coin_logo.png" alt="Cryptin">
-                </a>
-                <span class="footer-tagline">The Future of Mining</span>
+    <footer class="site-footer">
+        <div class="footer-inner">
+            <div class="footer-col footer-col--brand">
+                <img src="Graphics/cryptin_coin_logo.png" alt="Cryptin" height="32" loading="lazy">
+                <p class="footer-copy">© 2026 Cryptin. Alle Rechte vorbehalten.</p>
             </div>
-            <div class="footer-social">
-                <a href="#discord" class="footer-social-btn" title="Discord">
-                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057c.001.022.015.043.032.056a19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.995a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/></svg>
-                </a>
-                <a href="#" class="footer-social-btn" title="YouTube">
-                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
-                </a>
-                <a href="#" class="footer-social-btn" title="Twitter / X">
-                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
-                </a>
-                <a href="#" class="footer-social-btn" title="Telegram">
-                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>
-                </a>
-            </div>
-        </div>
-        <div class="footer-bottom">
-            <p class="footer-copy">© 2026 <b>Cryptin</b>. All rights reserved.</p>
-            <div class="footer-bottom-links">
+            <nav class="footer-col footer-col--links" aria-label="Footer Navigation">
                 <a href="#">Impressum</a>
                 <a href="#">Datenschutz</a>
-                <a href="#">AGB</a>
+                <a href="#">Regelwerk</a>
+                <a href="#">Discord</a>
+            </nav>
+            <div class="footer-col footer-col--social">
+                <a href="#" class="social-link" aria-label="Discord">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg>
+                </a>
+                <a href="#" class="social-link" aria-label="Twitter / X">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.73-8.835L1.254 2.25H8.08l4.253 5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+                </a>
+                <a href="#" class="social-link" aria-label="YouTube">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+                </a>
             </div>
-            <p class="footer-credit">Design &amp; Developed by <a href="#">CryptinTeam</a></p>
         </div>
     </footer>
 
-    <script src="js/script.js"></script>
+    <!-- ===== LOGIN / REGISTER MODAL ===== -->
+    <div class="modal-overlay" id="modalOverlay" aria-hidden="true" role="dialog" aria-modal="true" aria-label="Login und Registrierung">
+        <div class="modal-box" id="modalBox">
+            <button class="modal-close" id="modalClose" type="button" aria-label="Schließen">✕</button>
+            <div class="modal-logo">
+                <img src="Graphics/cryptin_coin_logo.png" alt="Cryptin" height="40">
+            </div>
+            <div class="modal-tabs" role="tablist">
+                <button class="modal-tab modal-tab--active" id="tabLogin" role="tab" aria-selected="true" type="button">Login</button>
+                <button class="modal-tab" id="tabRegister" role="tab" aria-selected="false" type="button">Registrieren</button>
+            </div>
+
+            <!-- Login Form -->
+            <form class="modal-form" id="formLogin" novalidate>
+                <div class="form-group">
+                    <label class="form-label" for="loginEmail">E-Mail</label>
+                    <input class="form-input" type="email" id="loginEmail" name="email" placeholder="deine@email.de" autocomplete="email">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="loginPassword">Passwort</label>
+                    <input class="form-input" type="password" id="loginPassword" name="password" placeholder="••••••••" autocomplete="current-password">
+                </div>
+                <button class="btn-gold btn-submit" type="submit">EINLOGGEN</button>
+            </form>
+
+            <!-- Register Form -->
+            <form class="modal-form modal-form--hidden" id="formRegister" novalidate>
+                <div class="form-group">
+                    <label class="form-label" for="regUsername">Benutzername</label>
+                    <input class="form-input" type="text" id="regUsername" name="username" placeholder="DragonSlayer99" autocomplete="username">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="regEmail">E-Mail</label>
+                    <input class="form-input" type="email" id="regEmail" name="email" placeholder="deine@email.de" autocomplete="email">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="regPassword">Passwort</label>
+                    <input class="form-input" type="password" id="regPassword" name="password" placeholder="••••••••" autocomplete="new-password">
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="regPasswordConfirm">Passwort wiederholen</label>
+                    <input class="form-input" type="password" id="regPasswordConfirm" name="password_confirm" placeholder="••••••••" autocomplete="new-password">
+                </div>
+                <button class="btn-gold btn-submit" type="submit">ACCOUNT ERSTELLEN</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Scripts -->
     <script src="js/coin3d.js"></script>
     <script src="js/minigame.js"></script>
+    <script src="js/script.js"></script>
+    <script src="js/main.js"></script>
 </body>
 </html>
