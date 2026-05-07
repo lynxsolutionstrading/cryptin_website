@@ -4,11 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cryptin — Das Crypto MMORPG</title>
+    <meta name="description" content="Cryptin — Das erste Crypto MMORPG. Herrsche. Kämpfe. Verdiene echte Kryptowährung.">
     <link rel="icon" type="image/png" href="Graphics/cryptin_coin_logo.png">
     <link rel="preload" as="image" href="Graphics/cryptin_intro_wall.jpg" fetchpriority="high">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Inter:wght@400;500;600;700;800&family=Bebas+Neue&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Inter:wght@400;500;600;700;800&family=Bebas+Neue:wght@400&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
     <style>
         /* Intro wall starts invisible; JS fades it in after all resources are loaded */
@@ -22,19 +23,20 @@
 
     <!-- ===== CUSTOM CURSOR ===== -->
     <div id="cursor-dot" aria-hidden="true"></div>
+    <div id="cursor-ring" aria-hidden="true"></div>
 
     <!-- ===== PAGE LOADER ===== -->
     <div id="pageLoader" aria-hidden="true">
         <img src="Graphics/Cryptin_with_Slogan.png" alt="Cryptin" class="loader-logo">
-        <div class="loader-ring"></div>
+        <div class="loader-progress-wrap">
+            <div class="loader-progress-bar" id="loaderBar"></div>
+        </div>
+        <p class="loader-text">LADE DEIN SCHICKSAL...</p>
     </div>
 
-    <!-- ===== INTRO WALL — fullscreen image + ENTER button + GSAP-driven shatter ===== -->
+    <!-- ===== INTRO WALL ===== -->
     <div id="intro-wall" class="intro-wall">
-        <!-- Static background image, replaced by SVG chunks once shatter starts -->
         <img class="intro-bg-img" id="introBgImg" src="Graphics/cryptin_intro_wall.jpg" alt="">
-
-        <!-- SVG canvas for cracks + falling chunks (filled by JS at click) -->
         <svg class="intro-svg" id="introSvg" viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
             <defs>
                 <pattern id="introImgPattern" patternUnits="userSpaceOnUse" x="0" y="0" width="1920" height="1080">
@@ -52,9 +54,7 @@
             <g class="cracks" id="introCracks"></g>
             <g class="dust" id="introDust"></g>
         </svg>
-
         <img class="intro-logo" id="introLogo" src="Graphics/Cryptin_with_Slogan.png" alt="Cryptin">
-
         <div class="intro-btn-group">
             <button class="intro-enter" id="introEnter" type="button">ENTER</button>
             <button class="intro-minigame" id="introMiniGame" type="button">Start Mini-Game</button>
@@ -62,27 +62,24 @@
     </div>
 
     <!-- ===== LIVE STRIP (hidden, kept for script.js compat) ===== -->
-    <div class="live-strip" style="display:none" aria-hidden="true"></div>
+    <div class="live-strip" aria-hidden="true"></div>
 
     <!-- ===== NAVIGATION ===== -->
     <nav class="main-nav" id="mainNav">
         <div class="nav-inner">
             <a href="#" class="nav-logo" aria-label="Cryptin Home">
-                <img src="Graphics/cryptin_coin_logo.png" alt="Cryptin" height="36">
+                <img src="Graphics/cryptin_coin_logo.png" alt="Cryptin" height="38">
             </a>
-
             <ul class="nav-links" id="navLinks">
-                <li><a href="#about">Über das Spiel</a></li>
-                <li><a href="#ranking">Rangliste</a></li>
-                <li><a href="#news">News</a></li>
-                <li><a href="#download">Download</a></li>
+                <li><a href="#world">WELT</a></li>
+                <li><a href="#ranking">RANGLISTE</a></li>
+                <li><a href="#news">NEUIGKEITEN</a></li>
+                <li><a href="#download">DOWNLOAD</a></li>
             </ul>
-
             <div class="nav-actions">
-                <button class="btn-login" id="btnLogin" type="button">Login</button>
-                <button class="btn-register" id="btnRegister" type="button">Registrieren</button>
+                <button class="btn-login" id="btnLogin" type="button">LOGIN</button>
+                <button class="btn-register" id="btnRegister" type="button">REGISTRIEREN</button>
             </div>
-
             <button class="hamburger" id="hamburger" type="button" aria-label="Menü öffnen" aria-expanded="false">
                 <span></span><span></span><span></span>
             </button>
@@ -93,132 +90,265 @@
     <div class="mobile-menu" id="mobileMenu" aria-hidden="true">
         <button class="mobile-menu-close" id="mobileClose" type="button" aria-label="Menü schließen">✕</button>
         <ul>
-            <li><a href="#about" class="mobile-link">Über das Spiel</a></li>
-            <li><a href="#ranking" class="mobile-link">Rangliste</a></li>
-            <li><a href="#news" class="mobile-link">News</a></li>
-            <li><a href="#download" class="mobile-link">Download</a></li>
+            <li><a href="#world"    class="mobile-link">WELT</a></li>
+            <li><a href="#ranking"  class="mobile-link">RANGLISTE</a></li>
+            <li><a href="#news"     class="mobile-link">NEUIGKEITEN</a></li>
+            <li><a href="#download" class="mobile-link">DOWNLOAD</a></li>
         </ul>
         <div class="mobile-actions">
-            <button class="btn-login" id="btnLoginMobile" type="button">Login</button>
-            <button class="btn-register" id="btnRegisterMobile" type="button">Registrieren</button>
+            <button class="btn-login"    id="btnLoginMobile"    type="button">LOGIN</button>
+            <button class="btn-register" id="btnRegisterMobile" type="button">REGISTRIEREN</button>
         </div>
     </div>
 
     <!-- ===== SECTION 1: HERO ===== -->
     <section class="hero" id="hero">
+        <!-- Layer 1: Three.js WebGL particles -->
+        <canvas id="heroParticles" class="hero-particles" aria-hidden="true"></canvas>
+
+        <!-- Layer 2: Cinematic video -->
         <video class="hero-video" autoplay muted loop playsinline poster="Graphics/cryptin_city_bg_dark.png" preload="auto">
             <source src="Graphics/cryptin_city_bg_sharp_strong.mp4" type="video/mp4">
         </video>
-        <div class="hero-video-gradient"></div>
-        <canvas id="heroParticles" class="hero-particles" aria-hidden="true"></canvas>
 
-        <div class="hero-content">
+        <!-- Layer 3: Gradient overlays -->
+        <div class="hero-overlay-bottom"  aria-hidden="true"></div>
+        <div class="hero-overlay-top"     aria-hidden="true"></div>
+        <div class="hero-overlay-vignette" aria-hidden="true"></div>
+
+        <!-- Layer 4: Hero content -->
+        <div class="hero-content" id="heroContent">
+            <p class="hero-eyebrow" id="heroEyebrow">WORLDS FIRST CRYPTO MMORPG</p>
             <img src="Graphics/Cryptin_with_Slogan.png" alt="Cryptin — Das Crypto MMORPG" class="hero-logo" id="heroLogo">
+            <p class="hero-tagline" id="heroTagline">HERRSCHE.&nbsp;&nbsp;KÄMPFE.&nbsp;&nbsp;VERDIENE.</p>
             <div class="hero-buttons" id="heroButtons">
-                <a href="#download" class="btn-gold btn-lg">JETZT SPIELEN</a>
-                <a href="#about" class="btn-ghost btn-lg">MEHR ERFAHREN</a>
+                <a href="#download" class="btn-gold btn-lg btn-play">JETZT SPIELEN</a>
+                <a href="#world"    class="btn-ghost btn-lg btn-trailer"><span class="play-icon">▶</span> TRAILER ANSEHEN</a>
             </div>
         </div>
 
+        <!-- Layer 5: Server status bar -->
         <div class="hero-status-bar">
             <div class="hero-status-inner">
                 <div class="status-item">
                     <span class="status-dot status-dot--green"></span>
-                    <span class="status-label">SPIELER ONLINE:</span>
-                    <span class="status-value counter" data-target="1247">0</span>
-                </div>
-                <div class="status-item">
-                    <span class="status-dot status-dot--green"></span>
-                    <span class="status-label">SERVER STATUS:</span>
                     <span class="status-value">ONLINE</span>
                 </div>
+                <div class="status-divider" aria-hidden="true"></div>
                 <div class="status-item">
-                    <span class="status-dot status-dot--gold"></span>
-                    <span class="status-label">UPTIME:</span>
+                    <span class="status-label">SPIELER&nbsp;</span>
+                    <span class="status-value live-val" data-count="1247">0</span>
+                </div>
+                <div class="status-divider" aria-hidden="true"></div>
+                <div class="status-item">
+                    <span class="status-label">GILDEN&nbsp;</span>
+                    <span class="status-value live-val" data-count="284">0</span>
+                </div>
+                <div class="status-divider" aria-hidden="true"></div>
+                <div class="status-item">
+                    <span class="status-label">UPTIME&nbsp;</span>
                     <span class="status-value">99.8%</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Layer 6: Scroll indicator -->
+        <div class="scroll-indicator" aria-hidden="true">
+            <span class="scroll-indicator-text">SCROLLEN</span>
+            <div class="scroll-indicator-line"></div>
+        </div>
+    </section>
+
+    <!-- ===== SECTION 2: CINEMATIC STORY (PINNED) ===== -->
+    <section class="section-story" id="story">
+        <div class="story-pin-wrap" id="storyPin">
+            <!-- Scene 1: The Void -->
+            <div class="story-scene" id="storyScene1">
+                <div class="story-shockwave" aria-hidden="true"></div>
+                <div class="story-scene-content">
+                    <p class="story-line story-line-1">SEIT JAHRHUNDERTEN...</p>
+                    <p class="story-line story-line-2">...SCHLÄFT DAS REICH</p>
+                </div>
+            </div>
+            <!-- Scene 2: The Awakening -->
+            <div class="story-scene story-scene--hidden" id="storyScene2">
+                <div class="story-lightray" aria-hidden="true"></div>
+                <div class="story-city-silhouette" aria-hidden="true">
+                    <!-- Asset für: Episches Stadtsilhouetten-Artwork (Fantasy-Stadt mit goldenen Lichtern, Nebel, 1920x600px) benötigt -->
+                </div>
+                <div class="story-scene-content story-scene-content--center">
+                    <p class="story-eyebrow">DAS ZEITALTER BEGINNT</p>
+                    <h2 class="story-heading">EIN NEUES ZEITALTER</h2>
+                    <p class="story-sub">Die Dunkelheit weicht. Eine neue Macht erwacht.</p>
+                </div>
+            </div>
+            <!-- Scene 3: The Call -->
+            <div class="story-scene story-scene--hidden" id="storyScene3">
+                <div class="story-hero-silhouette" aria-hidden="true">
+                    <!-- Asset für: Hero-Charakter-Artwork (epischer Krieger von hinten, in Richtung Stadt blickend, cinematisch, 800x1000px) benötigt -->
+                </div>
+                <div class="story-scene-content story-scene-content--center">
+                    <h2 class="story-cta-heading">WIRST DU<br><span class="story-cta-gold">ES WAGEN?</span></h2>
+                    <div class="story-cta-buttons">
+                        <a href="#download" class="btn-gold btn-lg">JETZT BEITRETEN</a>
+                        <a href="#world"    class="btn-ghost btn-lg">MEHR ERFAHREN</a>
+                    </div>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- ===== SECTION 2: SERVER STATS ===== -->
+    <!-- ===== SECTION 3: WORLD SHOWCASE ===== -->
+    <section class="section-world" id="world">
+        <!-- Panel 1: Die Unterwelt -->
+        <div class="world-panel" id="worldPanel1">
+            <div class="world-panel-bg world-panel-bg--1" aria-hidden="true">
+                <!-- Asset für: Dungeon-Zone Artwork (dunkle Höhle mit roten Kristallen und goldenen Ruinen, cinematic, 1920x1080px) benötigt -->
+            </div>
+            <div class="world-panel-gradient" aria-hidden="true"></div>
+            <div class="world-panel-content world-panel-content--left">
+                <span class="world-panel-number">01</span>
+                <h2 class="world-panel-title">DIE UNTERWELT</h2>
+                <p class="world-panel-desc">Tauche ein in tödliche Dungeons voller Geheimnisse, seltener Schätze und mächtiger Bosse. Nur die Stärksten kehren zurück.</p>
+                <a href="#download" class="btn-gold">JETZT ERKUNDEN</a>
+            </div>
+        </div>
+        <!-- Panel 2: Reich der Krieger -->
+        <div class="world-panel" id="worldPanel2">
+            <div class="world-panel-bg world-panel-bg--2" aria-hidden="true">
+                <!-- Asset für: PvP-Zone Artwork (epische Schlachtfeld-Szene, Krieger kämpfen bei Sonnenuntergang, 1920x1080px) benötigt -->
+            </div>
+            <div class="world-panel-gradient" aria-hidden="true"></div>
+            <div class="world-panel-content world-panel-content--right">
+                <span class="world-panel-number">02</span>
+                <h2 class="world-panel-title">DAS REICH DER KRIEGER</h2>
+                <p class="world-panel-desc">Beweise dein Können in epischen PvP-Schlachten. Territorien werden erobert, Legenden werden geschrieben.</p>
+                <a href="#download" class="btn-gold">IN DIE Schlacht</a>
+            </div>
+        </div>
+        <!-- Panel 3: Die Goldene Stadt -->
+        <div class="world-panel" id="worldPanel3">
+            <div class="world-panel-bg world-panel-bg--3" aria-hidden="true">
+                <!-- Asset für: Stadt-Zone Artwork (Fantasy-Metropole bei Nacht, goldene Lichter, futuristisch-mittelalterlich, 1920x1080px) benötigt -->
+            </div>
+            <div class="world-panel-gradient" aria-hidden="true"></div>
+            <div class="world-panel-content world-panel-content--center">
+                <span class="world-panel-number">03</span>
+                <h2 class="world-panel-title">DIE GOLDENE STADT</h2>
+                <p class="world-panel-desc">Das Herz des Reiches. Hier wird gehandelt, intrigiert und Krypto verdient. Macht liegt in den Händen derer, die sie beanspruchen.</p>
+                <a href="#download" class="btn-gold">STADT BETRETEN</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===== SECTION 4: LIVE STATS ===== -->
     <section class="section-stats" id="stats">
+        <div class="stats-deco-line" aria-hidden="true"></div>
         <div class="section-inner">
-            <div class="section-heading reveal-up">
-                <h2 class="heading-display">DAS REICH LEBT</h2>
-                <p class="heading-sub">Echtzeit-Statistiken unseres Reiches</p>
+            <div class="section-heading">
+                <p class="stats-eyebrow reveal-up">ECHTZEIT</p>
+                <h2 class="heading-display heading-display--stats reveal-up">DAS REICH IN ZAHLEN</h2>
             </div>
             <div class="stats-grid">
                 <div class="stat-card reveal-up" data-delay="0">
+                    <div class="stat-pulse" aria-hidden="true"></div>
                     <div class="stat-value counter" data-target="1247">0</div>
                     <div class="stat-label">SPIELER ONLINE</div>
                 </div>
                 <div class="stat-card reveal-up" data-delay="1">
                     <div class="stat-value counter" data-target="15832">0</div>
-                    <div class="stat-label">ACCOUNTS</div>
+                    <div class="stat-label">REGISTRIERTE KRIEGER</div>
                 </div>
                 <div class="stat-card reveal-up" data-delay="2">
-                    <div class="stat-value stat-pct">99.8%</div>
-                    <div class="stat-label">UPTIME</div>
-                </div>
-                <div class="stat-card reveal-up" data-delay="3">
                     <div class="stat-value counter" data-target="284">0</div>
                     <div class="stat-label">AKTIVE GILDEN</div>
                 </div>
+                <div class="stat-card reveal-up" data-delay="3">
+                    <div class="stat-value stat-pct">99.8%</div>
+                    <div class="stat-label">SERVER UPTIME</div>
+                </div>
             </div>
         </div>
     </section>
 
-    <!-- ===== SECTION 3: CINEMATIC FEATURE ===== -->
-    <section class="section-feature" id="about">
-        <div class="feature-image-wrap">
-            <img src="Graphics/cryptin_city_bg_dark.png" alt="Cryptin City" class="feature-image parallax-img" loading="lazy">
+    <!-- ===== SECTION 5: FEATURES (ALTERNATING) ===== -->
+    <section class="section-features" id="features">
+        <!-- Feature 1: Krypto Verdienen -->
+        <div class="feature-row feature-row--normal">
+            <div class="feature-row-image">
+                <img src="Graphics/cryptin_city_bg_dark.png" alt="Krypto verdienen" class="feature-img parallax-feat" loading="lazy">
+                <!-- Asset für: Krypto-Feature Artwork (goldene Münzen fließen aus Bildschirm, abstrakt, 800x600px) benötigt -->
+            </div>
+            <div class="feature-row-content">
+                <span class="feature-tag reveal-clip">FEATURE 01</span>
+                <h2 class="feature-h2 reveal-clip">SPIEL.<br>VERDIENE.<br>WIEDERHOLE.</h2>
+                <p class="feature-body-text reveal-clip">Cryptin ist das erste MMORPG, in dem dein Spielfortschritt echte Kryptowährung generiert. Dungeons, Handel, PvP — jede Aktion hat echten Wert.</p>
+                <div class="feature-stat-highlight reveal-clip">
+                    <span class="feature-stat-value">Ø 2.4 USDT</span>
+                    <span class="feature-stat-label">PRO TAG</span>
+                </div>
+            </div>
         </div>
-        <div class="feature-content">
-            <span class="feature-label">WORLDS FIRST CRYPTO MMORPG</span>
-            <h2 class="heading-display feature-heading reveal-up">EIN REICH.<br>ECHTE BELOHNUNGEN.</h2>
-            <p class="feature-body reveal-up">
-                Cryptin verbindet das klassische Metin2-Gameplay mit echter Kryptowährung. Kämpfe, handle, herrsche — und verdiene dabei wirklich.
-            </p>
-            <ul class="feature-list">
-                <li class="feature-list-item stagger-left">
-                    <span class="feature-check">✓</span>
-                    Im Spiel Krypto verdienen
-                </li>
-                <li class="feature-list-item stagger-left">
-                    <span class="feature-check">✓</span>
-                    Dungeons &amp; epische Bosse
-                </li>
-                <li class="feature-list-item stagger-left">
-                    <span class="feature-check">✓</span>
-                    Gildenkriege &amp; Territorien
-                </li>
-                <li class="feature-list-item stagger-left">
-                    <span class="feature-check">✓</span>
-                    PvP &amp; PvE Arenen
-                </li>
-                <li class="feature-list-item stagger-left">
-                    <span class="feature-check">✓</span>
-                    Item Shop mit echten Assets
-                </li>
-            </ul>
+        <!-- Feature 2: Epische Schlachten -->
+        <div class="feature-row feature-row--reversed">
+            <div class="feature-row-image">
+                <div class="feature-img-placeholder feature-img-placeholder--battle">
+                    <!-- Asset für: PvP-Battle Screenshot/Artwork (2 Krieger im Kampf, dramatische Beleuchtung) benötigt -->
+                    <div class="feature-img-placeholder-inner">
+                        <span class="placeholder-icon">⚔</span>
+                        <span class="placeholder-label">PVP ARTWORK</span>
+                    </div>
+                </div>
+            </div>
+            <div class="feature-row-content">
+                <span class="feature-tag reveal-clip">FEATURE 02</span>
+                <h2 class="feature-h2 reveal-clip">EPISCHE<br>SCHLACHTEN</h2>
+                <p class="feature-body-text reveal-clip">Tritt in Echtzeit-PvP-Kämpfe an. Perfektioniere deinen Kampfstil, baue dein Gear auf und werde zur Legende des Reiches.</p>
+                <ul class="feature-list-mini">
+                    <li class="reveal-clip"><span class="check-gold">✓</span> 1v1 Duelle &amp; Guild Wars</li>
+                    <li class="reveal-clip"><span class="check-gold">✓</span> Territorien-Kontrolle</li>
+                    <li class="reveal-clip"><span class="check-gold">✓</span> Wöchentliche Turniere</li>
+                </ul>
+            </div>
+        </div>
+        <!-- Feature 3: Gilden Herrschaft -->
+        <div class="feature-row feature-row--normal">
+            <div class="feature-row-image">
+                <div class="feature-img-placeholder feature-img-placeholder--guild">
+                    <!-- Asset für: Gilden-Artwork (epische Burg/Festung von Gilde eingenommen, flag waving) benötigt -->
+                    <div class="feature-img-placeholder-inner">
+                        <span class="placeholder-icon">🏰</span>
+                        <span class="placeholder-label">GUILD ARTWORK</span>
+                    </div>
+                </div>
+            </div>
+            <div class="feature-row-content">
+                <span class="feature-tag reveal-clip">FEATURE 03</span>
+                <h2 class="feature-h2 reveal-clip">GILDEN<br>HERRSCHAFT</h2>
+                <p class="feature-body-text reveal-clip">Gründe oder tritt einer Gilde bei. Erobere Burgen, verteitige Territorien und teile Krypto-Gewinne mit deinen Verbündeten.</p>
+                <ul class="feature-list-mini">
+                    <li class="reveal-clip"><span class="check-gold">✓</span> Burgen besitzen &amp; verteidigen</li>
+                    <li class="reveal-clip"><span class="check-gold">✓</span> Gilden-Schatzkammer</li>
+                    <li class="reveal-clip"><span class="check-gold">✓</span> Diplomatiesystem</li>
+                </ul>
+            </div>
         </div>
     </section>
 
-    <!-- ===== SECTION 4: RANGLISTE ===== -->
+    <!-- ===== SECTION 6: RANGLISTE ===== -->
     <section class="section-ranking" id="ranking">
         <div class="section-inner">
-            <div class="section-heading reveal-up">
-                <h2 class="heading-display">LEGENDEN DES REICHES</h2>
-                <p class="heading-sub">Die stärksten Krieger und mächtigsten Gilden</p>
+            <div class="section-heading">
+                <h2 class="heading-display reveal-up">LEGENDEN DES REICHES</h2>
+                <p class="heading-sub reveal-up">Die stärksten Krieger und mächtigsten Gilden</p>
             </div>
             <div class="ranking-grid">
-                <!-- Top Spieler -->
+                <!-- Top Krieger -->
                 <div class="ranking-panel reveal-up">
-                    <h3 class="ranking-panel-title">TOP SPIELER</h3>
+                    <h3 class="ranking-panel-title">TOP KRIEGER</h3>
                     <ul class="ranking-list">
                         <li class="ranking-entry rank-1">
-                            <span class="rank-num">👑</span>
+                            <span class="rank-num"><svg width="14" height="14" viewBox="0 0 24 24" fill="#f0c030"><path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm2.7 2h8.6l.7 2H7l.7-2z"/></svg></span>
                             <span class="rank-avatar"></span>
                             <span class="rank-name">DragonSlayer99</span>
                             <span class="rank-detail">Lv. 95 Krieger</span>
@@ -254,13 +384,12 @@
                         </li>
                     </ul>
                 </div>
-
                 <!-- Top Gilden -->
                 <div class="ranking-panel reveal-up" data-delay="1">
                     <h3 class="ranking-panel-title">TOP GILDEN</h3>
                     <ul class="ranking-list">
                         <li class="ranking-entry rank-1">
-                            <span class="rank-num">👑</span>
+                            <span class="rank-num"><svg width="14" height="14" viewBox="0 0 24 24" fill="#f0c030"><path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm2.7 2h8.6l.7 2H7l.7-2z"/></svg></span>
                             <span class="rank-avatar rank-avatar--guild"></span>
                             <span class="rank-name">GoldenOrder</span>
                             <span class="rank-detail">284/300 Mitglieder</span>
@@ -298,93 +427,136 @@
                 </div>
             </div>
             <div class="ranking-footer reveal-up">
-                <a href="#ranking" class="btn-gold">VOLLSTÄNDIGE RANGLISTE</a>
+                <a href="#ranking" class="btn-outline-gold">VOLLSTÄNDIGE RANGLISTE</a>
             </div>
         </div>
     </section>
 
-    <!-- ===== SECTION 5: NEWS ===== -->
+    <!-- ===== SECTION 7: NEWS ===== -->
     <section class="section-news" id="news">
         <div class="section-inner">
-            <div class="section-heading reveal-up">
-                <h2 class="heading-display">AKTUELLES</h2>
-                <p class="heading-sub">Neuigkeiten aus dem Reich</p>
+            <div class="section-heading">
+                <h2 class="heading-display reveal-up">NEUIGKEITEN AUS DEM REICH</h2>
+                <p class="heading-sub reveal-up">Aktuelles, Events und Updates</p>
             </div>
             <div class="news-grid">
-                <article class="news-card reveal-up" data-delay="0">
-                    <div class="news-img">
+                <!-- Large card -->
+                <article class="news-card news-card--large reveal-up" data-delay="0">
+                    <div class="news-img news-img--large">
+                        <!-- Asset für: News-Thumbnail (Update 2.4 — 800x450px, cinematisch) benötigt -->
                         <span class="news-badge news-badge--update">UPDATE</span>
                     </div>
                     <div class="news-body">
                         <p class="news-date">März 2026</p>
-                        <h3 class="news-title">Patch 2.4 — Neue Dungeon Zone</h3>
-                        <p class="news-desc">Die sagenumwobene Drachenfestung öffnet ihre Tore. Neue Bosse, seltene Beute und exklusive Krypto-Rewards warten auf die mutigsten Krieger.</p>
-                        <a href="#news" class="news-read">Weiterlesen →</a>
+                        <h3 class="news-title">Patch 2.4 — Neue Dungeon Zone: Die Drachenfestung</h3>
+                        <p class="news-desc">Die sagenumwobene Drachenfestung öffnet ihre Tore. Neue Bosse, seltene Beute und exklusive Krypto-Rewards warten auf die mutigsten Krieger des Reiches.</p>
+                        <a href="#news" class="news-read">WEITERLESEN →</a>
                     </div>
                 </article>
-                <article class="news-card reveal-up" data-delay="1">
-                    <div class="news-img news-img--event">
-                        <span class="news-badge news-badge--event">EVENT</span>
-                    </div>
-                    <div class="news-body">
-                        <p class="news-date">April 2026</p>
-                        <h3 class="news-title">Guild War Event</h3>
-                        <p class="news-desc">Messe dich mit den stärksten Gilden des Reiches. Der Sieger erhält ein exklusives Territorium und einen massiven Krypto-Jackpot.</p>
-                        <a href="#news" class="news-read">Weiterlesen →</a>
-                    </div>
-                </article>
-                <article class="news-card reveal-up" data-delay="2">
-                    <div class="news-img news-img--news">
-                        <span class="news-badge news-badge--news">NEWS</span>
-                    </div>
-                    <div class="news-body">
-                        <p class="news-date">Mai 2026</p>
-                        <h3 class="news-title">Krypto Auszahlung Rekord</h3>
-                        <p class="news-desc">Unsere Spieler haben im April 2026 einen Rekord aufgestellt — über 48.000 EUR wurden in echter Kryptowährung ausgezahlt.</p>
-                        <a href="#news" class="news-read">Weiterlesen →</a>
-                    </div>
-                </article>
+                <!-- Small cards column -->
+                <div class="news-col-right">
+                    <article class="news-card reveal-up" data-delay="1">
+                        <div class="news-img news-img--event">
+                            <!-- Asset für: News-Thumbnail (Guild War — 800x450px, cinematisch) benötigt -->
+                            <span class="news-badge news-badge--event">EVENT</span>
+                        </div>
+                        <div class="news-body">
+                            <p class="news-date">April 2026</p>
+                            <h3 class="news-title">Guild War Season 3</h3>
+                            <p class="news-desc">Messe dich mit den stärksten Gilden. Krypto-Jackpot und exklusives Territorium für den Sieger.</p>
+                            <a href="#news" class="news-read">WEITERLESEN →</a>
+                        </div>
+                    </article>
+                    <article class="news-card reveal-up" data-delay="2">
+                        <div class="news-img news-img--news">
+                            <!-- Asset für: News-Thumbnail (Krypto Record — 800x450px, cinematisch) benötigt -->
+                            <span class="news-badge news-badge--record">REKORD</span>
+                        </div>
+                        <div class="news-body">
+                            <p class="news-date">Mai 2026</p>
+                            <h3 class="news-title">Krypto-Auszahlung Rekord: 48.000 EUR</h3>
+                            <p class="news-desc">Unsere Spieler haben im April 2026 einen neuen Rekord aufgestellt.</p>
+                            <a href="#news" class="news-read">WEITERLESEN →</a>
+                        </div>
+                    </article>
+                </div>
             </div>
         </div>
     </section>
 
-    <!-- ===== SECTION 6: DOWNLOAD CTA ===== -->
+    <!-- ===== SECTION 8: DOWNLOAD CTA ===== -->
     <section class="section-download" id="download">
-        <div class="download-pattern" aria-hidden="true"></div>
-        <div class="section-inner section-inner--center reveal-up">
-            <h2 class="heading-display heading-display--xl">TRITT DEM REICH BEI</h2>
-            <p class="download-sub">Kostenlos spielen — keine Kreditkarte erforderlich</p>
+        <div class="download-bg-img" aria-hidden="true"></div>
+        <div class="download-overlay-gradient" aria-hidden="true"></div>
+        <div class="download-content reveal-up">
+            <div class="download-deco-line" aria-hidden="true"></div>
+            <p class="download-eyebrow">DER MOMENT IST GEKOMMEN</p>
+            <h2 class="download-heading">TRITT DEM<br><span class="download-heading-gold">REICH</span> BEI</h2>
+            <p class="download-subtitle">Tausende Krieger warten bereits auf dich. Das Abenteuer beginnt jetzt.</p>
             <div class="download-buttons">
-                <a href="#" class="btn-gold btn-lg">CLIENT HERUNTERLADEN</a>
-                <a href="#" class="btn-ghost btn-lg" id="btnRegisterCta">ACCOUNT ERSTELLEN</a>
+                <a href="#"            class="btn-gold btn-xl">CLIENT HERUNTERLADEN</a>
+                <a href="#"            class="btn-ghost btn-xl" id="btnRegisterCta">ACCOUNT ERSTELLEN</a>
             </div>
+            <p class="download-fine">Keine Kreditkarte erforderlich &nbsp;·&nbsp; Kostenlos spielen &nbsp;·&nbsp; Sofort starten</p>
         </div>
     </section>
 
     <!-- ===== FOOTER ===== -->
     <footer class="site-footer">
         <div class="footer-inner">
+            <!-- Col 1: Brand -->
             <div class="footer-col footer-col--brand">
-                <img src="Graphics/cryptin_coin_logo.png" alt="Cryptin" height="32" loading="lazy">
-                <p class="footer-copy">© 2026 Cryptin. Alle Rechte vorbehalten.</p>
+                <a href="#" class="footer-logo-link" aria-label="Cryptin Home">
+                    <img src="Graphics/cryptin_coin_logo.png" alt="Cryptin" height="36" loading="lazy">
+                    <span class="footer-logo-text">CRYPTIN</span>
+                </a>
+                <p class="footer-tagline">Herrsche. Kämpfe. Verdiene.</p>
+                <div class="footer-socials">
+                    <a href="#" class="social-link" aria-label="Discord">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg>
+                    </a>
+                    <a href="#" class="social-link" aria-label="Twitter / X">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.73-8.835L1.254 2.25H8.08l4.253 5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+                    </a>
+                    <a href="#" class="social-link" aria-label="YouTube">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+                    </a>
+                </div>
             </div>
-            <nav class="footer-col footer-col--links" aria-label="Footer Navigation">
-                <a href="#">Impressum</a>
-                <a href="#">Datenschutz</a>
-                <a href="#">Regelwerk</a>
-                <a href="#">Discord</a>
-            </nav>
-            <div class="footer-col footer-col--social">
-                <a href="#" class="social-link" aria-label="Discord">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg>
-                </a>
-                <a href="#" class="social-link" aria-label="Twitter / X">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.73-8.835L1.254 2.25H8.08l4.253 5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
-                </a>
-                <a href="#" class="social-link" aria-label="YouTube">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
-                </a>
+            <!-- Col 2: Spiel -->
+            <div class="footer-col footer-col--links">
+                <h4 class="footer-col-title">SPIEL</h4>
+                <nav aria-label="Spiel Navigation">
+                    <a href="#">Über Cryptin</a>
+                    <a href="#features">Features</a>
+                    <a href="#world">Trailer</a>
+                    <a href="#ranking">Rangliste</a>
+                </nav>
             </div>
+            <!-- Col 3: Community -->
+            <div class="footer-col footer-col--links">
+                <h4 class="footer-col-title">COMMUNITY</h4>
+                <nav aria-label="Community Navigation">
+                    <a href="#">Discord</a>
+                    <a href="#">Forum</a>
+                    <a href="#">Events</a>
+                    <a href="#">Partnerprogramm</a>
+                </nav>
+            </div>
+            <!-- Col 4: Rechtliches -->
+            <div class="footer-col footer-col--links">
+                <h4 class="footer-col-title">RECHTLICHES</h4>
+                <nav aria-label="Rechtliche Navigation">
+                    <a href="#">Impressum</a>
+                    <a href="#">Datenschutz</a>
+                    <a href="#">AGB</a>
+                    <a href="#">Cookie</a>
+                </nav>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>© 2026 Cryptin. Alle Rechte vorbehalten.</p>
+            <p>Made with ⚔️ for the players</p>
         </div>
     </footer>
 
@@ -393,13 +565,14 @@
         <div class="modal-box" id="modalBox">
             <button class="modal-close" id="modalClose" type="button" aria-label="Schließen">✕</button>
             <div class="modal-logo">
-                <img src="Graphics/cryptin_coin_logo.png" alt="Cryptin" height="40">
+                <img src="Graphics/cryptin_coin_logo.png" alt="Cryptin" height="44">
+                <span class="modal-logo-text">CRYPTIN</span>
             </div>
+            <div class="modal-gold-line" aria-hidden="true"></div>
             <div class="modal-tabs" role="tablist">
-                <button class="modal-tab modal-tab--active" id="tabLogin" role="tab" aria-selected="true" type="button">Login</button>
-                <button class="modal-tab" id="tabRegister" role="tab" aria-selected="false" type="button">Registrieren</button>
+                <button class="modal-tab modal-tab--active" id="tabLogin"    role="tab" aria-selected="true"  type="button">LOGIN</button>
+                <button class="modal-tab"                   id="tabRegister" role="tab" aria-selected="false" type="button">REGISTRIEREN</button>
             </div>
-
             <!-- Login Form -->
             <form class="modal-form" id="formLogin" novalidate>
                 <div class="form-group">
@@ -408,11 +581,13 @@
                 </div>
                 <div class="form-group">
                     <label class="form-label" for="loginPassword">Passwort</label>
-                    <input class="form-input" type="password" id="loginPassword" name="password" placeholder="••••••••" autocomplete="current-password">
+                    <div class="input-wrap">
+                        <input class="form-input" type="password" id="loginPassword" name="password" placeholder="••••••••" autocomplete="current-password">
+                        <button type="button" class="input-eye" aria-label="Passwort anzeigen">👁</button>
+                    </div>
                 </div>
                 <button class="btn-gold btn-submit" type="submit">EINLOGGEN</button>
             </form>
-
             <!-- Register Form -->
             <form class="modal-form modal-form--hidden" id="formRegister" novalidate>
                 <div class="form-group">
@@ -425,18 +600,24 @@
                 </div>
                 <div class="form-group">
                     <label class="form-label" for="regPassword">Passwort</label>
-                    <input class="form-input" type="password" id="regPassword" name="password" placeholder="••••••••" autocomplete="new-password">
+                    <div class="input-wrap">
+                        <input class="form-input" type="password" id="regPassword" name="password" placeholder="••••••••" autocomplete="new-password">
+                        <button type="button" class="input-eye" aria-label="Passwort anzeigen">👁</button>
+                    </div>
                 </div>
                 <div class="form-group">
                     <label class="form-label" for="regPasswordConfirm">Passwort wiederholen</label>
-                    <input class="form-input" type="password" id="regPasswordConfirm" name="password_confirm" placeholder="••••••••" autocomplete="new-password">
+                    <div class="input-wrap">
+                        <input class="form-input" type="password" id="regPasswordConfirm" name="password_confirm" placeholder="••••••••" autocomplete="new-password">
+                        <button type="button" class="input-eye" aria-label="Passwort anzeigen">👁</button>
+                    </div>
                 </div>
                 <button class="btn-gold btn-submit" type="submit">ACCOUNT ERSTELLEN</button>
             </form>
         </div>
     </div>
 
-    <!-- Scripts -->
+    <!-- Scripts — order matters -->
     <script src="js/coin3d.js"></script>
     <script src="js/minigame.js"></script>
     <script src="js/script.js"></script>
