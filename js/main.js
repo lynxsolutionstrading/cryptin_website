@@ -1,8 +1,8 @@
 /* ====================================================================
    main.js — Cryptin Website
-   Handles: cursor, loader, nav, WebGL particles, hero animations,
-   GSAP pinned story, parallax, stats counters, feature reveals,
-   card tilt, modal, world panels, scroll reveals.
+   Handles: cursor, nav, WebGL particles, hero animations,
+   GSAP pinned world section, horizontal features scroll,
+   stats counters, scroll reveals, modal.
    Does NOT touch intro-wall logic (script.js handles that).
 ==================================================================== */
 
@@ -10,60 +10,59 @@
     'use strict';
 
     /* ================================================================
-       1. CUSTOM CURSOR — two-part lerp system
+       1. GSAP + ScrollTrigger SETUP
+    ================================================================ */
+    if (typeof gsap !== 'undefined' && typeof ScrollTrigger !== 'undefined') {
+        gsap.registerPlugin(ScrollTrigger);
+    }
+
+
+    /* ================================================================
+       2. CUSTOM CURSOR (desktop only)
     ================================================================ */
     (function initCursor() {
         if (window.matchMedia('(hover: none)').matches) return;
 
-        var dot  = document.getElementById('cursor-dot');
-        var ring = document.getElementById('cursor-ring');
+        var dot  = document.getElementById('cursorDot');
+        var ring = document.getElementById('cursorRing');
         if (!dot || !ring) return;
 
         var mouseX = -200, mouseY = -200;
-        var dotX   = -200, dotY   = -200;
         var ringX  = -200, ringY  = -200;
+        var raf;
 
         document.addEventListener('mousemove', function (e) {
             mouseX = e.clientX;
             mouseY = e.clientY;
         });
 
-        // Lerp factor: dot = instant (1.0), ring = slow (0.12)
         function lerp(a, b, t) { return a + (b - a) * t; }
 
-        (function animCursor() {
-            // Dot: instant follow
-            dotX = mouseX;
-            dotY = mouseY;
-            dot.style.left = dotX + 'px';
-            dot.style.top  = dotY + 'px';
+        function tick() {
+            dot.style.left = mouseX + 'px';
+            dot.style.top  = mouseY + 'px';
 
-            // Ring: slow lerp
-            ringX = lerp(ringX, mouseX, 0.12);
-            ringY = lerp(ringY, mouseY, 0.12);
+            ringX = lerp(ringX, mouseX, 0.1);
+            ringY = lerp(ringY, mouseY, 0.1);
             ring.style.left = ringX + 'px';
             ring.style.top  = ringY + 'px';
 
-            requestAnimationFrame(animCursor);
-        })();
-
-        // Hover effect on interactive elements
-        var hoverTargets = 'a, button, [role="button"], .news-card, .stat-card, .ranking-entry';
-
-        function onEnter() {
-            dot.classList.add('hovering');
-            ring.classList.add('hovering');
+            raf = requestAnimationFrame(tick);
         }
-        function onLeave() {
-            dot.classList.remove('hovering');
-            ring.classList.remove('hovering');
-        }
+        raf = requestAnimationFrame(tick);
+
+        var interactiveSelector = 'a, button, [role="button"], .rank-entry, .feat-panel, .ws-cta';
 
         document.addEventListener('mouseover', function (e) {
-            if (e.target.closest(hoverTargets)) onEnter();
+            if (e.target.closest(interactiveSelector)) {
+                document.body.classList.add('cursor-hover');
+            }
         });
+
         document.addEventListener('mouseout', function (e) {
-            if (e.target.closest(hoverTargets)) onLeave();
+            if (e.target.closest(interactiveSelector)) {
+                document.body.classList.remove('cursor-hover');
+            }
         });
 
         document.addEventListener('mouseleave', function () {
@@ -74,35 +73,11 @@
             dot.style.opacity  = '1';
             ring.style.opacity = '1';
         });
-    })();
 
-
-    /* ================================================================
-       2. LOADING SCREEN
-       script.js removes the loader after intro image decodes.
-       We only set a hard fallback in case script.js isn't loaded.
-    ================================================================ */
-    (function initLoader() {
-        var loader = document.getElementById('pageLoader');
-        if (!loader) return;
-
-        // Safety fallback: remove after 3s no matter what
-        var safeTimeout = setTimeout(function () {
-            if (loader.parentNode) {
-                loader.classList.add('ldr-out');
-                setTimeout(function () { if (loader.parentNode) loader.remove(); }, 650);
-            }
-        }, 3000);
-
-        // Cancel safety timeout if script.js removes loader first
-        var obs = new MutationObserver(function (muts) {
-            muts.forEach(function (m) {
-                m.removedNodes.forEach(function (n) {
-                    if (n === loader) { clearTimeout(safeTimeout); obs.disconnect(); }
-                });
-            });
+        document.addEventListener('visibilitychange', function () {
+            if (document.hidden) { cancelAnimationFrame(raf); }
+            else { raf = requestAnimationFrame(tick); }
         });
-        if (loader.parentNode) obs.observe(loader.parentNode, { childList: true });
     })();
 
 
@@ -114,7 +89,7 @@
         if (!nav) return;
 
         function update() {
-            if (window.scrollY > 80) {
+            if (window.scrollY > 60) {
                 nav.classList.add('scrolled');
             } else {
                 nav.classList.remove('scrolled');
@@ -127,13 +102,12 @@
 
 
     /* ================================================================
-       4. MOBILE HAMBURGER MENU
+       4. MOBILE HAMBURGER
     ================================================================ */
     (function initHamburger() {
         var hamburger   = document.getElementById('hamburger');
         var mobileMenu  = document.getElementById('mobileMenu');
         var mobileClose = document.getElementById('mobileClose');
-        var mobileLinks = document.querySelectorAll('.mobile-link');
         if (!hamburger || !mobileMenu) return;
 
         function openMenu() {
@@ -153,11 +127,12 @@
         }
 
         hamburger.addEventListener('click', function () {
-            hamburger.classList.contains('open') ? closeMenu() : openMenu();
+            mobileMenu.classList.contains('open') ? closeMenu() : openMenu();
         });
 
         if (mobileClose) mobileClose.addEventListener('click', closeMenu);
 
+        var mobileLinks = mobileMenu.querySelectorAll('.mobile-link');
         mobileLinks.forEach(function (link) {
             link.addEventListener('click', closeMenu);
         });
@@ -174,17 +149,15 @@
 
 
     /* ================================================================
-       5. HERO WEBGL PARTICLES — Three.js with custom ShaderMaterial
+       5. HERO THREE.JS PARTICLES
     ================================================================ */
-    var particleRunning = false;
-
     (function initParticles() {
         if (typeof THREE === 'undefined') return;
 
-        var canvas = document.getElementById('heroParticles');
+        var canvas = document.getElementById('heroCanvas');
         if (!canvas) return;
 
-        var hero = canvas.closest('.hero');
+        var hero = canvas.closest('.s-hero');
         if (!hero) return;
 
         var W = hero.offsetWidth;
@@ -201,28 +174,24 @@
         /* ---- Vertex Shader ---- */
         var vertShader = [
             'attribute float aSize;',
-            'attribute vec3 aColor;',
+            'attribute vec3  aColor;',
             'attribute float aOpacity;',
-            'varying vec3 vColor;',
+            'varying vec3  vColor;',
             'varying float vOpacity;',
             'uniform float uTime;',
-            'uniform vec2 uMouse;',
+            'uniform vec2  uMouse;',
             '',
             'void main() {',
             '    vec3 pos = position;',
-            '',
-            '    // Mouse repulsion',
-            '    vec2 diff = pos.xy - uMouse;',
+            '    vec2 diff  = pos.xy - uMouse;',
             '    float dist = length(diff);',
             '    if (dist < 120.0 && dist > 0.001) {',
-            '        float strength = (1.0 - dist / 120.0) * 18.0;',
-            '        pos.xy += normalize(diff) * strength;',
+            '        float s = (1.0 - dist / 120.0) * 18.0;',
+            '        pos.xy += normalize(diff) * s;',
             '    }',
-            '',
-            '    vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);',
-            '    gl_PointSize = aSize * (300.0 / -mvPosition.z);',
-            '    gl_Position = projectionMatrix * mvPosition;',
-            '',
+            '    vec4 mvPos = modelViewMatrix * vec4(pos, 1.0);',
+            '    gl_PointSize = aSize * (300.0 / -mvPos.z);',
+            '    gl_Position  = projectionMatrix * mvPos;',
             '    vColor   = aColor;',
             '    vOpacity = aOpacity;',
             '}'
@@ -230,773 +199,567 @@
 
         /* ---- Fragment Shader ---- */
         var fragShader = [
-            'varying vec3 vColor;',
+            'varying vec3  vColor;',
             'varying float vOpacity;',
             '',
             'void main() {',
-            '    vec2 uv = gl_PointCoord - vec2(0.5);',
+            '    vec2  uv   = gl_PointCoord - vec2(0.5);',
             '    float dist = length(uv);',
-            '    // Soft circular point with smoothstep falloff',
-            '    float alpha = smoothstep(0.5, 0.1, dist);',
-            '    if (alpha < 0.01) discard;',
-            '    gl_FragColor = vec4(vColor, alpha * vOpacity);',
+            '    float a    = smoothstep(0.5, 0.1, dist);',
+            '    if (a < 0.01) discard;',
+            '    gl_FragColor = vec4(vColor, a * vOpacity);',
             '}'
         ].join('\n');
 
-        var COUNT_A = 600; // ember/ash particles
-        var COUNT_B = 200; // glowing orbs
+        var COUNT_A = 600;
+        var COUNT_B = 200;
         var COUNT   = COUNT_A + COUNT_B;
 
-        // Typed arrays for attributes
-        var positions  = new Float32Array(COUNT * 3);
-        var sizes      = new Float32Array(COUNT);
-        var colors     = new Float32Array(COUNT * 3);
-        var opacities  = new Float32Array(COUNT);
-
-        // Per-particle data (not GPU-side)
-        var velX       = new Float32Array(COUNT);
-        var velY       = new Float32Array(COUNT);
-        var phase      = new Float32Array(COUNT);
-        var type       = new Uint8Array(COUNT); // 0=ember, 1=orb
+        var positions = new Float32Array(COUNT * 3);
+        var sizes     = new Float32Array(COUNT);
+        var colors    = new Float32Array(COUNT * 3);
+        var opacities = new Float32Array(COUNT);
+        var velX      = new Float32Array(COUNT);
+        var velY      = new Float32Array(COUNT);
+        var phase     = new Float32Array(COUNT);
+        var pType     = new Uint8Array(COUNT);
 
         function rnd(a, b) { return a + Math.random() * (b - a); }
 
-        // Interpolate between two gold hues
-        function goldColor(t, out, idx) {
-            // #c8960a → #f0c030
-            out[idx * 3 + 0] = 0.784 + t * (0.941 - 0.784);
-            out[idx * 3 + 1] = 0.588 + t * (0.753 - 0.588);
-            out[idx * 3 + 2] = 0.039 + t * (0.188 - 0.039);
+        function setGoldColor(t, arr, idx) {
+            arr[idx * 3 + 0] = 0.784 + t * (0.941 - 0.784);
+            arr[idx * 3 + 1] = 0.588 + t * (0.753 - 0.588);
+            arr[idx * 3 + 2] = 0.039 + t * (0.188 - 0.039);
         }
 
-        // Init Group A: embers
         for (var i = 0; i < COUNT_A; i++) {
             positions[i * 3 + 0] = Math.random() * W;
             positions[i * 3 + 1] = Math.random() * H;
             positions[i * 3 + 2] = 0;
-            sizes[i]     = rnd(0.8, 2.5);
-            opacities[i] = rnd(0.15, 0.7);
-            velX[i]      = rnd(-0.3, 0.3);
-            velY[i]      = -(rnd(0.3, 1.2)); // upward (negative in ortho top-down)
+            sizes[i]     = rnd(0.8, 2.8);
+            opacities[i] = rnd(0.1, 0.65);
+            velX[i]      = rnd(-0.25, 0.25);
+            velY[i]      = rnd(-0.6, -0.15);
             phase[i]     = Math.random() * Math.PI * 2;
-            type[i]      = 0;
-            goldColor(Math.random(), colors, i);
+            pType[i]     = 0;
+            setGoldColor(Math.random(), colors, i);
         }
 
-        // Init Group B: glowing orbs
         for (var j = COUNT_A; j < COUNT; j++) {
             positions[j * 3 + 0] = Math.random() * W;
             positions[j * 3 + 1] = Math.random() * H;
             positions[j * 3 + 2] = 0;
-            sizes[j]     = rnd(4, 8);
-            opacities[j] = rnd(0.05, 0.15);
-            velX[j]      = rnd(-0.15, 0.15);
-            velY[j]      = rnd(-0.08, 0.08);
+            sizes[j]     = rnd(2.0, 5.0);
+            opacities[j] = rnd(0.04, 0.2);
+            velX[j]      = rnd(-0.08, 0.08);
+            velY[j]      = rnd(-0.05, 0.05);
             phase[j]     = Math.random() * Math.PI * 2;
-            type[j]      = 1;
-            // Deep gold orbs
-            colors[j * 3 + 0] = 0.784;
-            colors[j * 3 + 1] = 0.588;
-            colors[j * 3 + 2] = 0.039;
+            pType[j]     = 1;
+            setGoldColor(Math.random() * 0.5, colors, j);
         }
 
-        var geometry = new THREE.BufferGeometry();
-        geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-        geometry.setAttribute('aSize',    new THREE.BufferAttribute(sizes, 1));
-        geometry.setAttribute('aColor',   new THREE.BufferAttribute(colors, 3));
-        geometry.setAttribute('aOpacity', new THREE.BufferAttribute(opacities, 1));
+        var geo  = new THREE.BufferGeometry();
+        var posAttr = new THREE.BufferAttribute(positions, 3);
+        posAttr.setUsage(THREE.DynamicDrawUsage);
+        geo.setAttribute('position', posAttr);
+        geo.setAttribute('aSize',    new THREE.BufferAttribute(sizes,    1));
+        geo.setAttribute('aColor',   new THREE.BufferAttribute(colors,   3));
+        geo.setAttribute('aOpacity', new THREE.BufferAttribute(opacities,1));
 
-        var uTime  = { value: 0.0 };
-        var uMouse = { value: new THREE.Vector2(-9999, -9999) };
-
-        var material = new THREE.ShaderMaterial({
+        var mat = new THREE.ShaderMaterial({
             vertexShader:   vertShader,
             fragmentShader: fragShader,
+            transparent:    true,
+            depthWrite:     false,
+            blending:       THREE.AdditiveBlending,
             uniforms: {
-                uTime:  uTime,
-                uMouse: uMouse
-            },
-            transparent: true,
-            depthWrite: false,
-            depthTest: false,
-            blending: THREE.AdditiveBlending
+                uTime:  { value: 0 },
+                uMouse: { value: new THREE.Vector2(-9999, -9999) }
+            }
         });
 
-        var points = new THREE.Points(geometry, material);
+        var points = new THREE.Points(geo, mat);
         scene.add(points);
 
-        var clock   = new THREE.Clock();
+        var mouseX = -9999, mouseY = -9999;
         var scrollSpeedBoost = 0;
+        var lastScrollY = window.scrollY;
+        var clock = new THREE.Clock();
+        var rafId;
+        var paused = false;
 
-        // Track mouse for GPU repulsion
         document.addEventListener('mousemove', function (e) {
-            // Convert screen coords to ortho camera space (0,0 top-left)
-            uMouse.value.set(e.clientX, e.clientY);
+            var rect = canvas.getBoundingClientRect();
+            mouseX = e.clientX - rect.left;
+            mouseY = H - (e.clientY - rect.top);
         });
 
-        // Scroll boost
         window.addEventListener('scroll', function () {
-            scrollSpeedBoost = window.scrollY / 2000;
+            var delta = Math.abs(window.scrollY - lastScrollY);
+            scrollSpeedBoost = Math.min(delta * 0.04, 3.0);
+            lastScrollY = window.scrollY;
         }, { passive: true });
 
-        function animateParticles() {
-            if (document.hidden) { particleRunning = false; return; }
-            particleRunning = true;
-            requestAnimationFrame(animateParticles);
+        function animate() {
+            if (paused) return;
+            rafId = requestAnimationFrame(animate);
 
-            var delta = clock.getDelta();
-            uTime.value += delta;
-            var t = uTime.value;
+            var dt = clock.getDelta();
+            var t  = clock.getElapsedTime();
 
-            var pos = geometry.attributes.position.array;
-            var ops = geometry.attributes.aOpacity.array;
+            mat.uniforms.uTime.value  = t;
+            mat.uniforms.uMouse.value.set(mouseX, mouseY);
 
-            for (var k = 0; k < COUNT; k++) {
-                if (type[k] === 0) {
-                    // Group A: ember — float upward
-                    var speed = (1 + scrollSpeedBoost) * delta * 60;
-                    pos[k * 3 + 0] += velX[k] * speed * 0.5;
-                    pos[k * 3 + 1] += velY[k] * speed;
+            scrollSpeedBoost *= 0.92;
 
-                    // Subtle flicker
-                    ops[k] = (0.15 + 0.55 * (0.5 + 0.5 * Math.sin(t * 2.1 + phase[k])));
+            for (var i = 0; i < COUNT; i++) {
+                var ix = i * 3;
+                var boost = 1.0 + scrollSpeedBoost;
 
-                    // Wrap around: when particle exits top, reset at bottom
-                    if (pos[k * 3 + 1] < -10) {
-                        pos[k * 3 + 1] = H + 10;
-                        pos[k * 3 + 0] = Math.random() * W;
+                if (pType[i] === 0) {
+                    // Ember: drift upward with horizontal sine
+                    positions[ix]     += (velX[i] + Math.sin(t * 0.7 + phase[i]) * 0.3) * dt * 60 * boost;
+                    positions[ix + 1] += velY[i] * dt * 60 * boost;
+
+                    // Flicker opacity
+                    opacities[i] = Math.max(0, opacities[i] * 0.998 + (Math.sin(t * 3 + phase[i]) * 0.015));
+
+                    // Wrap: off top → respawn at bottom
+                    if (positions[ix + 1] < -10) {
+                        positions[ix + 1] = H + 10;
+                        positions[ix]     = Math.random() * W;
+                        opacities[i]      = rnd(0.1, 0.65);
                     }
-                    // Wrap horizontal
-                    if (pos[k * 3 + 0] < -20) pos[k * 3 + 0] = W + 20;
-                    if (pos[k * 3 + 0] > W + 20) pos[k * 3 + 0] = -20;
-
+                    // Wrap: off sides
+                    if (positions[ix] < -10) positions[ix] = W + 10;
+                    if (positions[ix] > W + 10) positions[ix] = -10;
                 } else {
-                    // Group B: orbs — slow sine drift
-                    pos[k * 3 + 0] += velX[k] * delta * 30 + Math.sin(t * 0.4 + phase[k]) * 0.3;
-                    pos[k * 3 + 1] += velY[k] * delta * 30 + Math.cos(t * 0.35 + phase[k]) * 0.25;
+                    // Orb: slow sine drift
+                    positions[ix]     += (velX[i] + Math.sin(t * 0.3 + phase[i]) * 0.15) * dt * 60;
+                    positions[ix + 1] += (velY[i] + Math.cos(t * 0.25 + phase[i] * 1.3) * 0.1) * dt * 60;
 
-                    ops[k] = 0.05 + 0.1 * (0.5 + 0.5 * Math.sin(t * 0.8 + phase[k]));
-
-                    // Wrap both axes
-                    if (pos[k * 3 + 0] < -50) pos[k * 3 + 0] = W + 50;
-                    if (pos[k * 3 + 0] > W + 50) pos[k * 3 + 0] = -50;
-                    if (pos[k * 3 + 1] < -50) pos[k * 3 + 1] = H + 50;
-                    if (pos[k * 3 + 1] > H + 50) pos[k * 3 + 1] = -50;
+                    if (positions[ix] < -60)    positions[ix] = W + 60;
+                    if (positions[ix] > W + 60) positions[ix] = -60;
+                    if (positions[ix + 1] < -60)    positions[ix + 1] = H + 60;
+                    if (positions[ix + 1] > H + 60) positions[ix + 1] = -60;
                 }
             }
 
-            geometry.attributes.position.needsUpdate = true;
-            geometry.attributes.aOpacity.needsUpdate = true;
+            posAttr.needsUpdate = true;
+            geo.setAttribute('aOpacity', new THREE.BufferAttribute(opacities, 1));
 
             renderer.render(scene, camera);
         }
 
-        animateParticles();
+        animate();
 
-        // Resize handler
+        document.addEventListener('visibilitychange', function () {
+            if (document.hidden) {
+                paused = true;
+                cancelAnimationFrame(rafId);
+                clock.stop();
+            } else {
+                paused = false;
+                clock.start();
+                animate();
+            }
+        });
+
         window.addEventListener('resize', function () {
             W = hero.offsetWidth;
             H = hero.offsetHeight;
             renderer.setSize(W, H);
-            camera = new THREE.OrthographicCamera(0, W, H, 0, -1, 1);
-        }, { passive: true });
-
-        // Pause when tab hidden
-        document.addEventListener('visibilitychange', function () {
-            if (!document.hidden && !particleRunning) {
-                clock.getDelta(); // reset delta so no jump
-                animateParticles();
-            }
+            camera.right  = W;
+            camera.bottom = H;
+            camera.updateProjectionMatrix();
         });
     })();
 
 
     /* ================================================================
-       6. HERO ENTRY ANIMATIONS (GSAP)
+       6. HERO ENTRY ANIMATION
+       Fires once when the intro wall is removed from the DOM
     ================================================================ */
-    (function initHeroAnimations() {
+    (function initHeroAnimation() {
+        var eyebrow = document.getElementById('heroEyebrow');
+        var logo    = document.getElementById('heroLogo');
+        var btns    = document.getElementById('heroButtons');
+        if (!eyebrow || !logo || !btns) return;
         if (typeof gsap === 'undefined') return;
 
-        var eyebrow  = document.getElementById('heroEyebrow');
-        var heroLogo = document.getElementById('heroLogo');
-        var tagline  = document.getElementById('heroTagline');
-        var buttons  = document.getElementById('heroButtons');
+        // Hide initially — will be revealed by animation
+        gsap.set([eyebrow, logo, btns], { opacity: 0 });
+        gsap.set(eyebrow, { y: 20 });
+        gsap.set(logo,    { scale: 1.06 });
+        gsap.set(btns,    { y: 24 });
 
-        function runHeroAnim() {
-            if (heroLogo) {
-                heroLogo.classList.add('animated');
-            }
-
+        function playHeroEntry() {
             var tl = gsap.timeline();
-
-            if (eyebrow) {
-                tl.to(eyebrow, {
-                    opacity: 1,
-                    y: 0,
-                    duration: 0.8,
-                    ease: 'power3.out',
-                    delay: 0.3
-                }, 0);
-            }
-
-            if (heroLogo) {
-                tl.to(heroLogo, {
-                    opacity: 1,
-                    scale: 1,
-                    duration: 1.4,
-                    ease: 'power3.out',
-                    delay: 0.2
-                }, 0);
-            }
-
-            if (tagline) {
-                // Stagger each word
-                var words = tagline.querySelectorAll ? null : null;
-                tl.to(tagline, {
-                    opacity: 1,
-                    duration: 0.8,
-                    ease: 'power2.out',
-                    delay: 0.8
-                }, 0);
-            }
-
-            if (buttons) {
-                tl.to(buttons, {
-                    opacity: 1,
-                    y: 0,
-                    duration: 0.8,
-                    ease: 'power3.out',
-                    delay: 1.2
-                }, 0);
-            }
+            tl.to(eyebrow, { y: 0, opacity: 1, duration: 0.8, ease: 'power2.out', delay: 0.1 })
+              .to(logo,    { scale: 1, opacity: 1, duration: 1.2, ease: 'power2.out' }, '-=0.5')
+              .to(btns,    { y: 0, opacity: 1, duration: 0.7, ease: 'power2.out' }, '-=0.7');
         }
 
-        // Wait for intro wall to be removed before triggering
-        var introWall = document.getElementById('intro-wall');
-        if (!introWall) { runHeroAnim(); return; }
-
-        var wallObs = new MutationObserver(function (mutations) {
-            mutations.forEach(function (m) {
-                if (m.type === 'attributes' && m.attributeName === 'style') {
-                    var op = parseFloat(introWall.style.opacity);
-                    if (op === 0 || introWall.style.display === 'none') {
-                        runHeroAnim();
-                        wallObs.disconnect();
-                    }
-                }
-                m.removedNodes.forEach(function (n) {
-                    if (n === introWall) { runHeroAnim(); wallObs.disconnect(); }
-                });
-            });
-        });
-
-        wallObs.observe(introWall, { attributes: true, attributeFilter: ['style'] });
-        if (introWall.parentNode) wallObs.observe(introWall.parentNode, { childList: true });
-
-        // Hard fallback
-        setTimeout(function () { wallObs.disconnect(); runHeroAnim(); }, 10000);
-    })();
-
-
-    /* ================================================================
-       7. COUNTER ANIMATIONS
-    ================================================================ */
-    function animateCounter(el, target, duration) {
-        var start = performance.now();
-        var isDecimal = String(target).indexOf('.') !== -1;
-
-        function step(now) {
-            var p = Math.min((now - start) / duration, 1);
-            var e = 1 - Math.pow(1 - p, 3); // cubic ease out
-            var current = target * e;
-            if (isDecimal) {
-                el.textContent = current.toFixed(1);
-            } else {
-                el.textContent = Math.round(current).toLocaleString('de-DE');
-            }
-            if (p < 1) requestAnimationFrame(step);
-        }
-        requestAnimationFrame(step);
-    }
-
-
-    /* ================================================================
-       8. SCROLL REVEAL — IntersectionObserver
-    ================================================================ */
-    (function initScrollReveal() {
-        if (!('IntersectionObserver' in window)) {
-            document.querySelectorAll('.reveal-up, .reveal-clip').forEach(function (el) {
-                el.classList.add('in-view');
-            });
+        var wall = document.getElementById('intro-wall');
+        if (!wall) {
+            // Intro wall already gone
+            playHeroEntry();
             return;
         }
 
-        var revealObs = new IntersectionObserver(function (entries) {
-            entries.forEach(function (entry) {
-                if (!entry.isIntersecting) return;
-                var el    = entry.target;
-                var delay = el.dataset.delay ? parseFloat(el.dataset.delay) * 120 : 0;
-                setTimeout(function () { el.classList.add('in-view'); }, delay);
-                revealObs.unobserve(el);
-            });
-        }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
-
-        document.querySelectorAll('.reveal-up, .reveal-clip').forEach(function (el) {
-            revealObs.observe(el);
+        // Watch for the intro wall being removed or hidden
+        var observer = new MutationObserver(function () {
+            var w = document.getElementById('intro-wall');
+            if (!w || w.style.display === 'none' || parseFloat(getComputedStyle(w).opacity) < 0.05) {
+                observer.disconnect();
+                playHeroEntry();
+            }
         });
 
-        // Counter IntersectionObserver
-        var counterObs = new IntersectionObserver(function (entries) {
-            entries.forEach(function (entry) {
-                if (!entry.isIntersecting) return;
-                var el  = entry.target;
-                var tgt = parseInt(el.dataset.target, 10);
-                if (!isNaN(tgt)) animateCounter(el, tgt, 2000);
-                counterObs.unobserve(el);
-            });
-        }, { threshold: 0.3 });
+        observer.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['style', 'class'] });
 
-        document.querySelectorAll('.counter[data-target]').forEach(function (el) {
-            counterObs.observe(el);
-        });
-
-        // Hero status bar live-val counters
-        var liveObs = new IntersectionObserver(function (entries) {
-            entries.forEach(function (entry) {
-                if (!entry.isIntersecting) return;
-                var el  = entry.target;
-                var tgt = parseInt(el.dataset.count, 10);
-                if (!isNaN(tgt)) animateCounter(el, tgt, 1600);
-                liveObs.unobserve(el);
-            });
-        }, { threshold: 0.3 });
-
-        document.querySelectorAll('.live-val[data-count]').forEach(function (el) {
-            liveObs.observe(el);
-        });
-
-        // World panel content reveal
-        var worldObs = new IntersectionObserver(function (entries) {
-            entries.forEach(function (entry) {
-                if (!entry.isIntersecting) return;
-                entry.target.classList.add('in-view');
-                worldObs.unobserve(entry.target);
-            });
-        }, { threshold: 0.2 });
-
-        document.querySelectorAll('.world-panel').forEach(function (p) {
-            worldObs.observe(p);
-        });
+        // Fallback: also fire after 4s in case wall stays
+        setTimeout(function () {
+            observer.disconnect();
+            var logoEl = document.getElementById('heroLogo');
+            if (logoEl && parseFloat(getComputedStyle(logoEl).opacity) < 0.5) {
+                playHeroEntry();
+            }
+        }, 4000);
     })();
 
 
     /* ================================================================
-       9. GSAP SCROLL TRIGGER — Pinned story, parallax, feature reveals
+       7. WORLD PINNED SECTION (GSAP ScrollTrigger scrub)
     ================================================================ */
-    (function initGSAP() {
+    (function initWorldSection() {
         if (typeof gsap === 'undefined' || typeof ScrollTrigger === 'undefined') return;
-        gsap.registerPlugin(ScrollTrigger);
 
-        // ---- Pinned Story Section ----
-        var storySection = document.getElementById('story');
-        var storyPin     = document.getElementById('storyPin');
-        var scene1       = document.getElementById('storyScene1');
-        var scene2       = document.getElementById('storyScene2');
-        var scene3       = document.getElementById('storyScene3');
+        var worldEl = document.getElementById('world');
+        var wsA = document.getElementById('wsA');
+        var wsB = document.getElementById('wsB');
+        var wsC = document.getElementById('wsC');
+        if (!worldEl || !wsA || !wsB || !wsC) return;
 
-        if (storySection && storyPin && scene1 && scene2 && scene3) {
+        // Set initial states
+        gsap.set(wsA, { opacity: 1 });
+        gsap.set(wsB, { opacity: 0 });
+        gsap.set(wsC, { opacity: 0 });
 
-            // Pin the container for 300vh of scroll
-            ScrollTrigger.create({
-                trigger: storySection,
+        // Reveal content items
+        var aItems = wsA.querySelectorAll('.ws-label, .ws-title, .ws-body');
+        var bItems = wsB.querySelectorAll('.ws-label, .ws-title, .ws-body');
+        var cItems = wsC.querySelectorAll('.ws-label, .ws-title, .ws-body, .ws-cta');
+        gsap.set([aItems, bItems, cItems], { y: 40, opacity: 0 });
+
+        var scrollDist = window.innerHeight * 3.5;
+
+        var tl = gsap.timeline({
+            scrollTrigger: {
+                trigger: worldEl,
                 start: 'top top',
-                end: 'bottom bottom',
-                pin: storyPin,
-                pinSpacing: false
-            });
+                end: '+=' + scrollDist,
+                pin: '#worldPin',
+                scrub: 1.2,
+                anticipatePin: 1,
+                invalidateOnRefresh: true
+            }
+        });
 
-            // Scene 1 → 2 transition at scroll 33%
-            ScrollTrigger.create({
-                trigger: storySection,
+        // Normalize positions to 0-1 timeline
+        // Scene A: visible 0-0.3, fades 0.3-0.38
+        // Scene B: fades in 0.3-0.38, visible 0.38-0.65, fades 0.65-0.73
+        // Scene C: fades in 0.65-0.73, stays 0.73-1
+
+        tl
+            // Scene A content in
+            .to(aItems, { y: 0, opacity: 1, duration: 0.12, stagger: 0.03 }, 0)
+            // Scene A fades out
+            .to(wsA, { opacity: 0, duration: 0.08 }, 0.28)
+            // Scene B fades in
+            .to(wsB, { opacity: 1, duration: 0.08 }, 0.30)
+            .to(bItems, { y: 0, opacity: 1, duration: 0.1, stagger: 0.02 }, 0.32)
+            // Scene B fades out
+            .to(wsB, { opacity: 0, duration: 0.08 }, 0.63)
+            // Scene C fades in
+            .to(wsC, { opacity: 1, duration: 0.08 }, 0.65)
+            .to(cItems, { y: 0, opacity: 1, duration: 0.1, stagger: 0.02 }, 0.67);
+    })();
+
+
+    /* ================================================================
+       8. FEATURES HORIZONTAL SCROLL (GSAP ScrollTrigger)
+    ================================================================ */
+    (function initFeaturesScroll() {
+        if (typeof gsap === 'undefined' || typeof ScrollTrigger === 'undefined') return;
+
+        var section = document.querySelector('.s-features');
+        var track   = document.getElementById('featuresTrack');
+        if (!section || !track) return;
+
+        var panels  = track.querySelectorAll('.feat-panel');
+
+        // Animate content in when panel enters center
+        panels.forEach(function (panel) {
+            var content = panel.querySelector('.feat-content');
+            if (!content) return;
+            gsap.set(content, { y: 30, opacity: 0 });
+        });
+
+        // Horizontal translation amount (updated on refresh)
+        function getScrollWidth() {
+            return track.scrollWidth - window.innerWidth;
+        }
+
+        gsap.to(track, {
+            x: function () { return -getScrollWidth(); },
+            ease: 'none',
+            scrollTrigger: {
+                trigger: section,
                 start: 'top top',
-                end: '33% top',
+                end: function () { return '+=' + getScrollWidth(); },
+                pin: true,
                 scrub: 1,
+                anticipatePin: 1,
+                invalidateOnRefresh: true,
                 onUpdate: function (self) {
-                    var p = self.progress;
-                    if (p > 0.85) {
-                        // Fade out scene 1 text
-                        var lines = scene1.querySelectorAll('.story-line');
-                        lines.forEach(function (l) {
-                            gsap.set(l, { opacity: 1 - (p - 0.85) * 6 });
-                        });
-                    }
-                }
-            });
-
-            ScrollTrigger.create({
-                trigger: storySection,
-                start: '28% top',
-                end: '36% top',
-                scrub: 1,
-                onUpdate: function (self) {
-                    var p = self.progress;
-                    scene1.style.opacity = 1 - p;
-                    scene2.style.opacity = p;
-                    scene2.style.pointerEvents = p > 0.5 ? 'auto' : 'none';
-                }
-            });
-
-            // Scene 2 → 3 transition at scroll 66%
-            ScrollTrigger.create({
-                trigger: storySection,
-                start: '62% top',
-                end: '70% top',
-                scrub: 1,
-                onUpdate: function (self) {
-                    var p = self.progress;
-                    scene2.style.opacity = 1 - p;
-                    scene3.style.opacity = p;
-                    scene3.style.pointerEvents = p > 0.5 ? 'auto' : 'none';
-                }
-            });
-
-            // Scene 1 initial reveal
-            ScrollTrigger.create({
-                trigger: storySection,
-                start: 'top 80%',
-                once: true,
-                onEnter: function () {
-                    var lines = scene1.querySelectorAll('.story-line');
-                    lines.forEach(function (l, i) {
-                        gsap.fromTo(l,
-                            { y: 40, opacity: 0 },
-                            { y: 0, opacity: 1, duration: 1, ease: 'power3.out', delay: i * 0.3 }
-                        );
+                    // Reveal content as panel nears center
+                    var progress = self.progress;
+                    var total    = panels.length;
+                    panels.forEach(function (panel, idx) {
+                        var panelProgress = idx / (total - 1);
+                        var dist = Math.abs(progress - panelProgress);
+                        var content = panel.querySelector('.feat-content');
+                        if (!content) return;
+                        if (dist < 0.35) {
+                            var opacity = Math.max(0, 1 - dist * 3);
+                            var yVal    = dist * 60;
+                            gsap.set(content, { opacity: opacity, y: yVal });
+                        } else {
+                            gsap.set(content, { opacity: 0, y: 30 });
+                        }
                     });
                 }
-            });
-
-            // Scene 2 heading reveal when it enters
-            ScrollTrigger.create({
-                trigger: storySection,
-                start: '33% top',
-                once: true,
-                onEnter: function () {
-                    var h = scene2.querySelector('.story-heading');
-                    var e = scene2.querySelector('.story-eyebrow');
-                    var s = scene2.querySelector('.story-sub');
-                    if (e) gsap.fromTo(e, { y: 20, opacity: 0 }, { y: 0, opacity: 1, duration: 0.7, ease: 'power3.out' });
-                    if (h) gsap.fromTo(h, { y: 60, opacity: 0 }, { y: 0, opacity: 1, duration: 1.2, ease: 'power3.out', delay: 0.2 });
-                    if (s) gsap.fromTo(s, { y: 20, opacity: 0 }, { y: 0, opacity: 1, duration: 0.8, ease: 'power3.out', delay: 0.6 });
-                }
-            });
-
-            // Scene 3 heading reveal
-            ScrollTrigger.create({
-                trigger: storySection,
-                start: '66% top',
-                once: true,
-                onEnter: function () {
-                    var h = scene3.querySelector('.story-cta-heading');
-                    var b = scene3.querySelector('.story-cta-buttons');
-                    if (h) gsap.fromTo(h, { scale: 0.9, opacity: 0 }, { scale: 1, opacity: 1, duration: 1.2, ease: 'power3.out' });
-                    if (b) gsap.fromTo(b, { y: 40, opacity: 0 }, { y: 0, opacity: 1, duration: 0.8, ease: 'power3.out', delay: 0.5 });
-                }
-            });
-        }
-
-        // ---- World Panels: background parallax ----
-        document.querySelectorAll('.world-panel').forEach(function (panel) {
-            var bg = panel.querySelector('.world-panel-bg');
-            if (!bg) return;
-            gsap.fromTo(bg,
-                { yPercent: -8 },
-                {
-                    yPercent: 8,
-                    ease: 'none',
-                    scrollTrigger: {
-                        trigger: panel,
-                        start: 'top bottom',
-                        end: 'bottom top',
-                        scrub: true
-                    }
-                }
-            );
-        });
-
-        // ---- Feature row image parallax ----
-        var featImg = document.querySelector('.parallax-feat');
-        if (featImg) {
-            gsap.fromTo(featImg,
-                { y: -60 },
-                {
-                    y: 60,
-                    ease: 'none',
-                    scrollTrigger: {
-                        trigger: featImg.closest('.feature-row'),
-                        start: 'top bottom',
-                        end: 'bottom top',
-                        scrub: true
-                    }
-                }
-            );
-        }
-
-        // ---- Feature content text reveals ----
-        document.querySelectorAll('.feature-row').forEach(function (row) {
-            var clips = row.querySelectorAll('.reveal-clip');
-            if (!clips.length) return;
-            clips.forEach(function (el, i) {
-                ScrollTrigger.create({
-                    trigger: el,
-                    start: 'top 88%',
-                    once: true,
-                    onEnter: function () {
-                        setTimeout(function () {
-                            el.classList.add('in-view');
-                        }, i * 100);
-                    }
-                });
-            });
-        });
-
-        // ---- Stats section gold decorative line animation ----
-        var statsSection = document.querySelector('.section-stats');
-        if (statsSection) {
-            ScrollTrigger.create({
-                trigger: statsSection,
-                start: 'top 70%',
-                once: true,
-                onEnter: function () {
-                    var line = statsSection.querySelector('.stats-deco-line');
-                    if (line) {
-                        gsap.fromTo(line,
-                            { scaleY: 0, opacity: 0 },
-                            { scaleY: 1, opacity: 0.3, duration: 1.2, ease: 'power3.out', transformOrigin: 'top' }
-                        );
-                    }
-                }
-            });
-        }
-
-        // ---- Download section reveal ----
-        var dlSection = document.querySelector('.section-download');
-        if (dlSection) {
-            ScrollTrigger.create({
-                trigger: dlSection,
-                start: 'top 70%',
-                once: true,
-                onEnter: function () {
-                    var content = dlSection.querySelector('.download-content');
-                    if (content) {
-                        gsap.fromTo(content,
-                            { y: 60, opacity: 0 },
-                            { y: 0, opacity: 1, duration: 1.0, ease: 'power3.out' }
-                        );
-                    }
-                }
-            });
-        }
-
-    })();
-
-
-    /* ================================================================
-       10. 3D TILT EFFECT ON CARDS
-    ================================================================ */
-    (function initTilt() {
-        if (window.matchMedia('(hover: none)').matches) return;
-
-        var cards = document.querySelectorAll('.stat-card, .news-card, .ranking-panel');
-
-        cards.forEach(function (card) {
-            card.classList.add('tilt-card');
-
-            card.addEventListener('mousemove', function (e) {
-                var rect   = card.getBoundingClientRect();
-                var cx     = rect.left + rect.width  / 2;
-                var cy     = rect.top  + rect.height / 2;
-                var dx     = (e.clientX - cx) / (rect.width  / 2);
-                var dy     = (e.clientY - cy) / (rect.height / 2);
-                var rotX   = -dy * 6;  // max ±6deg
-                var rotY   =  dx * 6;
-
-                card.style.transform = 'perspective(800px) rotateX(' + rotX + 'deg) rotateY(' + rotY + 'deg) translateZ(4px)';
-            });
-
-            card.addEventListener('mouseleave', function () {
-                card.style.transform = '';
-            });
+            }
         });
     })();
 
 
     /* ================================================================
-       11. SMOOTH SCROLL
+       9. STATS COUNTERS (IntersectionObserver)
     ================================================================ */
-    document.querySelectorAll('a[href^="#"]').forEach(function (link) {
-        link.addEventListener('click', function (e) {
-            var href = link.getAttribute('href');
-            if (href === '#' || href.length <= 1) return;
-            var target = document.querySelector(href);
+    (function initStats() {
+        var statsSection = document.querySelector('.s-stats');
+        if (!statsSection) return;
+
+        var statVals = statsSection.querySelectorAll('.stat-val[data-target]');
+        var animated = false;
+
+        function animateCounter(el) {
+            var target   = parseFloat(el.getAttribute('data-target'));
+            var isPct    = el.classList.contains('stat-val--pct');
+            var isFloat  = target !== Math.floor(target);
+            var duration = 1800;
+            var start    = null;
+
+            function easeOut(t) { return 1 - Math.pow(1 - t, 3); }
+
+            function step(ts) {
+                if (!start) start = ts;
+                var elapsed  = ts - start;
+                var progress = Math.min(elapsed / duration, 1);
+                var easedP   = easeOut(progress);
+                var current  = target * easedP;
+
+                if (isFloat) {
+                    el.textContent = current.toFixed(1);
+                } else {
+                    el.textContent = Math.floor(current).toLocaleString('de-DE');
+                }
+
+                if (progress < 1) {
+                    requestAnimationFrame(step);
+                } else {
+                    el.textContent = isFloat ? target.toFixed(1) : target.toLocaleString('de-DE');
+                }
+            }
+
+            requestAnimationFrame(step);
+        }
+
+        var observer = new IntersectionObserver(function (entries) {
+            entries.forEach(function (entry) {
+                if (entry.isIntersecting && !animated) {
+                    animated = true;
+                    statVals.forEach(function (el) {
+                        animateCounter(el);
+                    });
+                    observer.disconnect();
+                }
+            });
+        }, { threshold: 0.3 });
+
+        observer.observe(statsSection);
+    })();
+
+
+    /* ================================================================
+       10. SCROLL REVEAL (IntersectionObserver)
+    ================================================================ */
+    (function initReveal() {
+        var revealEls = document.querySelectorAll(
+            '.rank-eyebrow, .rank-heading, .rank-panels, .rank-cta, ' +
+            '.dl-eyebrow, .dl-title, .dl-sub, .dl-btns, .dl-fine, ' +
+            '.stats-eyebrow, .stats-heading'
+        );
+
+        revealEls.forEach(function (el) {
+            el.classList.add('reveal');
+        });
+
+        var revealObserver = new IntersectionObserver(function (entries) {
+            entries.forEach(function (entry) {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('in-view');
+                    revealObserver.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.15 });
+
+        document.querySelectorAll('.reveal').forEach(function (el) {
+            revealObserver.observe(el);
+        });
+    })();
+
+
+    /* ================================================================
+       11. MODAL — Login / Register
+    ================================================================ */
+    var openModal; // hoisted so hamburger init can call it
+
+    (function initModal() {
+        var modal       = document.getElementById('modal');
+        var overlay     = document.getElementById('modalOverlay');
+        var closeBtn    = document.getElementById('modalClose');
+        var tabs        = document.querySelectorAll('.mtab');
+        var formLogin   = document.getElementById('formLogin');
+        var formRegister= document.getElementById('formRegister');
+        if (!modal) return;
+
+        function closeModal() {
+            modal.classList.remove('open');
+            modal.setAttribute('aria-hidden', 'true');
+            document.body.style.overflow = '';
+        }
+
+        openModal = function (tab) {
+            tab = tab || 'login';
+            modal.classList.add('open');
+            modal.setAttribute('aria-hidden', 'false');
+            document.body.style.overflow = 'hidden';
+            switchTab(tab);
+        };
+
+        function switchTab(tab) {
+            tabs.forEach(function (t) {
+                var isActive = t.getAttribute('data-tab') === tab;
+                t.classList.toggle('mtab--active', isActive);
+            });
+            if (formLogin)    formLogin.classList.toggle('mform--active',    tab === 'login');
+            if (formRegister) formRegister.classList.toggle('mform--active', tab === 'register');
+            if (formLogin)    formLogin.style.display    = (tab === 'login')     ? 'flex' : 'none';
+            if (formRegister) formRegister.style.display = (tab === 'register')  ? 'flex' : 'none';
+        }
+
+        // Initial state
+        if (formRegister) formRegister.style.display = 'none';
+
+        tabs.forEach(function (tab) {
+            tab.addEventListener('click', function () {
+                switchTab(this.getAttribute('data-tab'));
+            });
+        });
+
+        if (closeBtn) closeBtn.addEventListener('click', closeModal);
+        if (overlay)  overlay.addEventListener('click', closeModal);
+
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape' && modal.classList.contains('open')) closeModal();
+        });
+
+        // Prevent box clicks from closing
+        var box = modal.querySelector('.modal-box');
+        if (box) box.addEventListener('click', function (e) { e.stopPropagation(); });
+
+        // Form submit handlers
+        if (formLogin) {
+            formLogin.addEventListener('submit', function (e) {
+                e.preventDefault();
+                // Placeholder: add auth logic here
+                console.log('Login submitted');
+            });
+        }
+
+        if (formRegister) {
+            formRegister.addEventListener('submit', function (e) {
+                e.preventDefault();
+                // Placeholder: add register logic here
+                console.log('Register submitted');
+            });
+        }
+
+        // Open triggers
+        var btnLogin    = document.getElementById('btnLogin');
+        var btnRegister = document.getElementById('btnRegister');
+        var btnRegCta   = document.getElementById('btnRegisterCta');
+
+        if (btnLogin)    btnLogin.addEventListener('click',    function () { openModal('login'); });
+        if (btnRegister) btnRegister.addEventListener('click', function () { openModal('register'); });
+        if (btnRegCta)   btnRegCta.addEventListener('click',   function () { openModal('register'); });
+
+        // Hero buttons
+        var heroPlay  = document.querySelector('.s-hero .btn-gold');
+        var heroMore  = document.querySelector('.s-hero .btn-ghost');
+        if (heroPlay) heroPlay.addEventListener('click', function () { openModal('register'); });
+        if (heroMore) heroMore.addEventListener('click', function () {
+            document.getElementById('world') && document.getElementById('world').scrollIntoView({ behavior: 'smooth' });
+        });
+
+        // World section CTA
+        var wsCta = document.querySelector('.ws-cta');
+        if (wsCta) wsCta.addEventListener('click', function () { openModal('register'); });
+
+        // Download section
+        var dlPlay = document.querySelector('.dl-btns .btn-gold--lg');
+        if (dlPlay) dlPlay.addEventListener('click', function () { openModal('register'); });
+    })();
+
+
+    /* ================================================================
+       12. RESIZE HANDLER
+    ================================================================ */
+    var resizeTimer;
+    window.addEventListener('resize', function () {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(function () {
+            if (typeof ScrollTrigger !== 'undefined') {
+                ScrollTrigger.refresh();
+            }
+        }, 200);
+    });
+
+
+    /* ================================================================
+       13. SMOOTH NAV ANCHOR SCROLLING
+    ================================================================ */
+    document.querySelectorAll('a[href^="#"]').forEach(function (anchor) {
+        anchor.addEventListener('click', function (e) {
+            var target = document.querySelector(this.getAttribute('href'));
             if (target) {
                 e.preventDefault();
-                var top = target.getBoundingClientRect().top + window.pageYOffset - 80;
-                window.scrollTo({ top: top, behavior: 'smooth' });
+                target.scrollIntoView({ behavior: 'smooth' });
             }
         });
     });
 
-
-    /* ================================================================
-       12. MODAL LOGIC
-    ================================================================ */
-    var modalState = { open: false, tab: 'login' };
-
-    function openModal(tab) {
-        var overlay   = document.getElementById('modalOverlay');
-        if (!overlay) return;
-        switchModalTab(tab || 'login');
-        overlay.classList.add('open');
-        overlay.setAttribute('aria-hidden', 'false');
-        document.body.style.overflow = 'hidden';
-        modalState.open = true;
-        setTimeout(function () {
-            var first = overlay.querySelector('.modal-form:not(.modal-form--hidden) .form-input');
-            if (first) first.focus();
-        }, 260);
-    }
-
-    function closeModal() {
-        var overlay = document.getElementById('modalOverlay');
-        if (!overlay) return;
-        overlay.classList.remove('open');
-        overlay.setAttribute('aria-hidden', 'true');
-        document.body.style.overflow = '';
-        modalState.open = false;
-    }
-
-    function switchModalTab(tab) {
-        var tL = document.getElementById('tabLogin');
-        var tR = document.getElementById('tabRegister');
-        var fL = document.getElementById('formLogin');
-        var fR = document.getElementById('formRegister');
-        if (!tL || !tR || !fL || !fR) return;
-
-        if (tab === 'login') {
-            tL.classList.add('modal-tab--active');    tL.setAttribute('aria-selected', 'true');
-            tR.classList.remove('modal-tab--active'); tR.setAttribute('aria-selected', 'false');
-            fL.classList.remove('modal-form--hidden');
-            fR.classList.add('modal-form--hidden');
-        } else {
-            tR.classList.add('modal-tab--active');    tR.setAttribute('aria-selected', 'true');
-            tL.classList.remove('modal-tab--active'); tL.setAttribute('aria-selected', 'false');
-            fR.classList.remove('modal-form--hidden');
-            fL.classList.add('modal-form--hidden');
-        }
-        modalState.tab = tab;
-    }
-
-    // Wire modal triggers
-    (function wireModal() {
-        var btnLogin    = document.getElementById('btnLogin');
-        var btnRegister = document.getElementById('btnRegister');
-        var btnRegCta   = document.getElementById('btnRegisterCta');
-        var modalClose  = document.getElementById('modalClose');
-        var overlay     = document.getElementById('modalOverlay');
-        var tL          = document.getElementById('tabLogin');
-        var tR          = document.getElementById('tabRegister');
-
-        if (btnLogin)    btnLogin.addEventListener('click',    function () { openModal('login'); });
-        if (btnRegister) btnRegister.addEventListener('click', function () { openModal('register'); });
-        if (btnRegCta)   btnRegCta.addEventListener('click',   function (e) { e.preventDefault(); openModal('register'); });
-        if (modalClose)  modalClose.addEventListener('click',  closeModal);
-
-        if (overlay) {
-            overlay.addEventListener('click', function (e) {
-                if (e.target === overlay) closeModal();
-            });
-        }
-
-        if (tL) tL.addEventListener('click', function () { switchModalTab('login'); });
-        if (tR) tR.addEventListener('click', function () { switchModalTab('register'); });
-
-        document.addEventListener('keydown', function (e) {
-            if (e.key === 'Escape' && modalState.open) closeModal();
-        });
-
-        // Prevent form submission on static site
-        var fL = document.getElementById('formLogin');
-        var fR = document.getElementById('formRegister');
-        if (fL) fL.addEventListener('submit', function (e) { e.preventDefault(); });
-        if (fR) fR.addEventListener('submit', function (e) { e.preventDefault(); });
-    })();
-
-
-    /* ================================================================
-       13. PASSWORD EYE TOGGLE
-    ================================================================ */
-    document.querySelectorAll('.input-eye').forEach(function (eye) {
-        eye.addEventListener('click', function () {
-            var input = eye.parentElement.querySelector('input');
-            if (!input) return;
-            input.type = input.type === 'password' ? 'text' : 'password';
-        });
-    });
-
-
-    /* ================================================================
-       14. NEWS TABS (kept for script.js compat)
-    ================================================================ */
-    document.querySelectorAll('.news-tab').forEach(function (tab) {
-        tab.addEventListener('click', function () {
-            document.querySelectorAll('.news-tab').forEach(function (t) {
-                t.classList.remove('active');
-            });
-            tab.classList.add('active');
-        });
-    });
-
-
-    /* ================================================================
-       15. PAGINATION (kept for script.js compat)
-    ================================================================ */
-    document.querySelectorAll('.pagination .page').forEach(function (btn) {
-        btn.addEventListener('click', function () {
-            if (btn.classList.contains('page-last')) return;
-            document.querySelectorAll('.pagination .page').forEach(function (p) {
-                p.classList.remove('active');
-            });
-            btn.classList.add('active');
-        });
-    });
-
-
-    /* ================================================================
-       16. MOUSEDOWN CLASS (for script.js cursor rotation compat)
-    ================================================================ */
-    window.addEventListener('mousedown', function () {
-        document.documentElement.classList.add('clicking');
-    });
-    window.addEventListener('mouseup', function () {
-        document.documentElement.classList.remove('clicking');
-    });
-    window.addEventListener('blur', function () {
-        document.documentElement.classList.remove('clicking');
-    });
-
-
-    /* ================================================================
-       17. STORY SCENE INITIAL STATE — ensure opacity is set
-    ================================================================ */
-    (function initStoryScenes() {
-        var s1 = document.getElementById('storyScene1');
-        var s2 = document.getElementById('storyScene2');
-        var s3 = document.getElementById('storyScene3');
-        if (s1) s1.style.opacity = '1';
-        if (s2) { s2.style.opacity = '0'; s2.classList.remove('story-scene--hidden'); }
-        if (s3) { s3.style.opacity = '0'; s3.classList.remove('story-scene--hidden'); }
-    })();
-
-
-})(); // end IIFE
+})();
